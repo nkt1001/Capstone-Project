@@ -8,23 +8,26 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MapsActivity extends AppCompatActivity implements
         GoogleMap.OnMyLocationButtonClickListener,
@@ -49,14 +52,23 @@ public class MapsActivity extends AppCompatActivity implements
 
     private GoogleMap mMap;
 
-    private Marker mCenterMarker;
-
     private static final String TAG = "MapsActivity";
+
+    @BindView(R.id.btn_find_address) Button mBtnChangeAddress;
+    @BindView(R.id.btn_ok_address) Button mBtnOkAddress;
+
+    @BindView(R.id.tv_cur_address) TextView mTvCurrentAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_maps);
+
+        ButterKnife.bind(this);
 
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -71,7 +83,7 @@ public class MapsActivity extends AppCompatActivity implements
         mMap.setOnCameraMoveStartedListener(this);
         mMap.setOnCameraMoveListener(this);
 
-        mMap.getUiSettings().setCompassEnabled(true);
+//        mMap.getUiSettings().setCompassEnabled(true);
 
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -100,22 +112,11 @@ public class MapsActivity extends AppCompatActivity implements
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraPosition cameraPosition = new CameraPosition.Builder()
                         .target(latLng)      // Sets the center of the map to location user
-                        .zoom(20)                   // Sets the zoom
+                        .zoom(19f)                   // Sets the zoom
                         .build();                   // Creates a CameraPosition from the builder
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                updateMarker(latLng);
             }
         }
-    }
-
-    private void updateMarker(LatLng latLng) {
-
-        if (mCenterMarker == null) {
-            mCenterMarker = mMap.addMarker(new MarkerOptions().position(latLng).anchor(0.5f, 0.5f));
-            return;
-        }
-
-        mCenterMarker.setPosition(latLng);
     }
 
     @Override
@@ -165,13 +166,41 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onCameraIdle() {
         Log.d(TAG, "onCameraIdle: ");
+        LatLng latLng = mMap.getCameraPosition().target;
+        showView(latLng);
+    }
+
+    private void showView(LatLng latLng) {
+//        if (mBtnOkAddress == null || mBtnChangeAddress == null || mTvCurrentAddress == null)
+//            return;
+
+        mTvCurrentAddress.setText(latLng.latitude + ":" + latLng.longitude);
+//
+        mBtnChangeAddress.setVisibility(View.VISIBLE);
+        mBtnOkAddress.setVisibility(View.VISIBLE);
+        mTvCurrentAddress.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onCameraMove() {
         Log.d(TAG, "onCameraMove: ");
-        LatLng latLng = mMap.getCameraPosition().target;
-        updateMarker(latLng);
+        hideViews();
+    }
+
+    private void hideViews() {
+//        if (mBtnOkAddress == null || mBtnChangeAddress == null || mTvCurrentAddress == null)
+//            return;
+        mBtnChangeAddress.setVisibility(View.GONE);
+        mBtnOkAddress.setVisibility(View.GONE);
+        mTvCurrentAddress.setVisibility(View.GONE);
+    }
+
+    public void okClick(View view) {
+        Toast.makeText(this, "hello ok", Toast.LENGTH_SHORT).show();
+    }
+
+    public void changeAddressClick(View view) {
+        Toast.makeText(this, "change address", Toast.LENGTH_SHORT).show();
     }
 
     private void cleanScreen() {
