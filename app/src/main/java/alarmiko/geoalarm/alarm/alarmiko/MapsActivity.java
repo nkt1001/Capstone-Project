@@ -2,7 +2,9 @@ package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -24,6 +26,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
 import butterknife.BindView;
@@ -59,6 +65,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     @BindView(R.id.tv_cur_address) TextView mTvCurrentAddress;
 
+    private Geocoder mGeocoder;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +81,8 @@ public class MapsActivity extends AppCompatActivity implements
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        mGeocoder = new Geocoder(this, Locale.getDefault());
     }
 
     @Override
@@ -83,7 +93,8 @@ public class MapsActivity extends AppCompatActivity implements
         mMap.setOnCameraMoveStartedListener(this);
         mMap.setOnCameraMoveListener(this);
 
-//        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(false);
+        mMap.getUiSettings().setRotateGesturesEnabled(false);
 
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -170,11 +181,20 @@ public class MapsActivity extends AppCompatActivity implements
         showView(latLng);
     }
 
-    private void showView(LatLng latLng) {
+    private void showView(LatLng latLng)  {
 //        if (mBtnOkAddress == null || mBtnChangeAddress == null || mTvCurrentAddress == null)
 //            return;
 
-        mTvCurrentAddress.setText(latLng.latitude + ":" + latLng.longitude);
+        try {
+            List<Address> address = mGeocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (address.size() > 0) {
+
+                mTvCurrentAddress.setText(address.get(0).getAddressLine(0));
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 //
         mBtnChangeAddress.setVisibility(View.VISIBLE);
         mBtnOkAddress.setVisibility(View.VISIBLE);
