@@ -42,8 +42,6 @@
         android:onClick="changeAddressClick"
         android:id="@+id/btn_find_address" />
 
-
-
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
