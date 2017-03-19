@@ -20,29 +20,25 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="64dp"
-        android:visibility="gone"
+        android:alpha="0"
         android:onClick="okClick"
         android:id="@+id/btn_ok_address" />
 
-    <TextView
+    <alarmiko.geoalarm.alarm.alarmiko.ui.AddressView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:id="@+id/address_view"
         android:layout_alignParentTop="true"
-        android:gravity="center"
-        android:padding="16dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
-        style="@style/TextAppearance.AppCompat.Large"
-        android:visibility="gone"
-        android:id="@+id/tv_cur_address" />
+        android:layout_marginTop="64dp" />
 
     <Button
         android:text="@string/change_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_cur_address"
+        android:layout_below="@+id/address_view"
         android:layout_centerHorizontal="true"
-        android:visibility="gone"
+        android:alpha="0"
         android:onClick="changeAddressClick"
         android:id="@+id/btn_find_address" />
 
@@ -52,6 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:alpha="0"
         app:srcCompat="@drawable/map_center_marker"
         android:id="@+id/imv_center_marker"
         android:contentDescription="@string/content_description_marker_image"

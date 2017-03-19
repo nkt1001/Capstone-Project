@@ -1,8 +1,6 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,7 +13,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,10 +21,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-
+import alarmiko.geoalarm.alarm.alarmiko.ui.AddressView;
 import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
 import butterknife.BindView;
@@ -38,8 +32,7 @@ public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleMap.OnCameraMoveStartedListener,
-        GoogleMap.OnCameraMoveListener,
-        GoogleMap.OnCameraIdleListener {
+        GoogleMap.OnCameraIdleListener, AddressView.AddressLoaderListener {
 
     /**
      * Request code for location permission request.
@@ -59,12 +52,13 @@ public class MapsActivity extends AppCompatActivity implements
     private static final String TAG = "MapsActivity";
 
     @BindView(R.id.imv_center_marker) ImageView mImvCenterMarker;
+
     @BindView(R.id.btn_find_address) Button mBtnChangeAddress;
     @BindView(R.id.btn_ok_address) Button mBtnOkAddress;
 
-    @BindView(R.id.tv_cur_address) TextView mTvCurrentAddress;
+    @BindView(R.id.address_view) AddressView mAddressView;
 
-    private Geocoder mGeocoder;
+    private static final int ANIMATION_DURATION = 300;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,11 +71,12 @@ public class MapsActivity extends AppCompatActivity implements
 
         ButterKnife.bind(this);
 
+        mAddressView.addOnAddressLoadedListener(this);
+
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        mGeocoder = new Geocoder(this, Locale.getDefault());
     }
 
     @Override
@@ -90,7 +85,6 @@ public class MapsActivity extends AppCompatActivity implements
 
         mMap.setOnCameraIdleListener(this);
         mMap.setOnCameraMoveStartedListener(this);
-        mMap.setOnCameraMoveListener(this);
 
         mMap.getUiSettings().setCompassEnabled(false);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
@@ -117,9 +111,9 @@ public class MapsActivity extends AppCompatActivity implements
                 @Override
                 public void currentLocation(Location location) {
                     if (location == null) {
-                        mImvCenterMarker.setVisibility(View.GONE);
                         return;
                     }
+                    mImvCenterMarker.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
                     mMap.moveCamera(CameraUpdateFactory
                             .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17f));
                 }
@@ -175,38 +169,13 @@ public class MapsActivity extends AppCompatActivity implements
     public void onCameraIdle() {
         Log.d(TAG, "onCameraIdle: ");
         LatLng latLng = mMap.getCameraPosition().target;
-        showView(latLng);
-    }
-
-    private void showView(LatLng latLng)  {
-
-        try {
-            List<Address> address = mGeocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-            if (address.size() > 0) {
-
-                mTvCurrentAddress.setText(address.get(0).getAddressLine(0));
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-//
-        mBtnChangeAddress.setVisibility(View.VISIBLE);
-        mBtnOkAddress.setVisibility(View.VISIBLE);
-        mTvCurrentAddress.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onCameraMove() {
-        Log.d(TAG, "onCameraMove: ");
-//        hideViews();
+        mAddressView.loadAddress(latLng);
     }
 
     private void hideViews() {
-
-        mBtnChangeAddress.setVisibility(View.GONE);
-        mBtnOkAddress.setVisibility(View.GONE);
-        mTvCurrentAddress.setVisibility(View.GONE);
+        mAddressView.hide();
+        mBtnChangeAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).start();
+        mBtnOkAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).start();
     }
 
     public void okClick(View view) {
@@ -220,5 +189,11 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onCameraMoveStarted(int i) {
         hideViews();
+    }
+
+    @Override
+    public void onAddressLoaded(String address) {
+        mBtnChangeAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
+        mBtnOkAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
     }
 }
