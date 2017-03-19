@@ -1,12 +1,9 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -17,6 +14,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,13 +22,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -60,6 +58,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     private static final String TAG = "MapsActivity";
 
+    @BindView(R.id.imv_center_marker) ImageView mImvCenterMarker;
     @BindView(R.id.btn_find_address) Button mBtnChangeAddress;
     @BindView(R.id.btn_ok_address) Button mBtnOkAddress;
 
@@ -95,6 +94,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         mMap.getUiSettings().setCompassEnabled(false);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
+        mMap.getUiSettings().setTiltGesturesEnabled(false);
 
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -113,20 +113,17 @@ public class MapsActivity extends AppCompatActivity implements
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
 
-            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-
-            Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
-            if (location != null) {
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 13));
-
-                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                CameraPosition cameraPosition = new CameraPosition.Builder()
-                        .target(latLng)      // Sets the center of the map to location user
-                        .zoom(19f)                   // Sets the zoom
-                        .build();                   // Creates a CameraPosition from the builder
-                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            }
+            new CurrentLocationService(this).getMyLocation(new CurrentLocationService.CurrentLocationServiceCallback() {
+                @Override
+                public void currentLocation(Location location) {
+                    if (location == null) {
+                        mImvCenterMarker.setVisibility(View.GONE);
+                        return;
+                    }
+                    mMap.moveCamera(CameraUpdateFactory
+                            .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17f));
+                }
+            });
         }
     }
 
@@ -182,8 +179,6 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void showView(LatLng latLng)  {
-//        if (mBtnOkAddress == null || mBtnChangeAddress == null || mTvCurrentAddress == null)
-//            return;
 
         try {
             List<Address> address = mGeocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
@@ -204,12 +199,11 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onCameraMove() {
         Log.d(TAG, "onCameraMove: ");
-        hideViews();
+//        hideViews();
     }
 
     private void hideViews() {
-//        if (mBtnOkAddress == null || mBtnChangeAddress == null || mTvCurrentAddress == null)
-//            return;
+
         mBtnChangeAddress.setVisibility(View.GONE);
         mBtnOkAddress.setVisibility(View.GONE);
         mTvCurrentAddress.setVisibility(View.GONE);
@@ -223,13 +217,8 @@ public class MapsActivity extends AppCompatActivity implements
         Toast.makeText(this, "change address", Toast.LENGTH_SHORT).show();
     }
 
-    private void cleanScreen() {
-        Log.d(TAG, "cleanScreen: ");
-    }
-
     @Override
     public void onCameraMoveStarted(int i) {
-        Log.d(TAG, "onCameraMoveStarted: ");
-        cleanScreen();
+        hideViews();
     }
 }

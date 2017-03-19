@@ -13,15 +13,6 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true"/>
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        app:srcCompat="@drawable/map_center_marker"
-        android:id="@+id/imageView"
-        android:contentDescription="@string/content_description_marker_image"
-        android:layout_centerHorizontal="true" />
-
     <Button
         android:text="@string/ok"
         android:layout_width="wrap_content"
@@ -34,7 +25,6 @@
         android:id="@+id/btn_ok_address" />
 
     <TextView
-        android:text="Dummy address"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -55,4 +45,15 @@
         android:visibility="gone"
         android:onClick="changeAddressClick"
         android:id="@+id/btn_find_address" />
+
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        app:srcCompat="@drawable/map_center_marker"
+        android:id="@+id/imv_center_marker"
+        android:contentDescription="@string/content_description_marker_image"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>
