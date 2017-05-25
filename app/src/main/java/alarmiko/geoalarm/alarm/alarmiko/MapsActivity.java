@@ -3,11 +3,14 @@ package alarmiko.geoalarm.alarm.alarmiko;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
@@ -15,6 +18,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -39,7 +43,7 @@ public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleMap.OnCameraMoveStartedListener,
-        GoogleMap.OnCameraIdleListener, AddressView.AddressLoaderListener {
+        GoogleMap.OnCameraIdleListener, AddressView.AddressLoaderListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     /**
      * Request code for location permission request.
@@ -48,6 +52,7 @@ public class MapsActivity extends AppCompatActivity implements
      */
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int REQUEST_PLACE_PICKER = 101;
+    private static final int ALARM_LOADER = 1001;
 
     /**
      * Flag indicating whether a requested permission has been denied after returning in
@@ -65,6 +70,8 @@ public class MapsActivity extends AppCompatActivity implements
     @BindView(R.id.btn_ok_address) Button mBtnOkAddress;
 
     @BindView(R.id.address_view) AddressView mAddressView;
+
+    @BindView(R.id.imb_menu) ImageButton mMenuButton;
 
     private static final int ANIMATION_DURATION = 300;
 
@@ -84,6 +91,8 @@ public class MapsActivity extends AppCompatActivity implements
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        getSupportLoaderManager().initLoader(ALARM_LOADER, null, this);
 
     }
 
@@ -236,6 +245,12 @@ public class MapsActivity extends AppCompatActivity implements
 
     }
 
+    public void menuClick(View view) {
+        Toast.makeText(this, "hello", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, AlarmActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     public void onCameraMoveStarted(int i) {
         hideViews();
@@ -245,5 +260,19 @@ public class MapsActivity extends AppCompatActivity implements
     public void onAddressLoaded(String address) {
         mBtnChangeAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
         mBtnOkAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

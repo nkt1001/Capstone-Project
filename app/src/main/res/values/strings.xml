@@ -7,4 +7,6 @@
     <string name="ok">OK</string>
     <string name="change_address">Change Address</string>
     <string name="content_description_marker_image">marker image</string>
+    <string name="title_activity_alarm">AlarmActivity</string>
+    <string name="action_settings">Settings</string>
 </resources>
