@@ -4,6 +4,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import java.util.List;
@@ -36,8 +37,9 @@ public class MyAlarmItemRecyclerViewAdapter extends RecyclerView.Adapter<MyAlarm
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mAliasView.setText(mValues.get(position).id);
+        holder.mRadiusView.setText(mValues.get(position).content);
+        holder.mInfoView.setText(mValues.get(position).details);
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,22 +58,31 @@ public class MyAlarmItemRecyclerViewAdapter extends RecyclerView.Adapter<MyAlarm
         return mValues.size();
     }
 
+    public void deleteItem(RecyclerView.ViewHolder item) {
+        mValues.remove(item.getAdapterPosition());
+        notifyDataSetChanged();
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mIdView;
-        public final TextView mContentView;
+        public final TextView mAliasView;
+        public final TextView mRadiusView;
+        public final TextView mInfoView;
+        public final Switch mAlarmSwitch;
         public DummyItem mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
-            mContentView = (TextView) view.findViewById(R.id.content);
+            mAliasView = (TextView) view.findViewById(R.id.tv_alarm_item_alias);
+            mRadiusView = (TextView) view.findViewById(R.id.tv_alarm_item_radius);
+            mInfoView = (TextView) view.findViewById(R.id.tv_alarm_item_info);
+            mAlarmSwitch = (Switch) view.findViewById(R.id.alarm_switch);
         }
 
         @Override
         public String toString() {
-            return super.toString() + " '" + mContentView.getText() + "'";
+            return super.toString() + " '" + mAliasView.getText() + "'";
         }
     }
 }
