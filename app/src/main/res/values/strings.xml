@@ -9,4 +9,9 @@
     <string name="content_description_marker_image">marker image</string>
     <string name="title_activity_alarm">AlarmActivity</string>
     <string name="action_settings">Settings</string>
+    <string name="alias">Alias</string>
+    <string name="ringtone">Ringtone</string>
+    <string name="dismiss_now">Dismiss Now</string>
+    <string name="delete">Delete</string>
+    <string name="radius">Radius</string>
 </resources>

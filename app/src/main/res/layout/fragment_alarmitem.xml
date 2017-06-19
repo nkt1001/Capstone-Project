@@ -18,6 +18,7 @@
             android:id="@+id/tv_alarm_item_alias"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="gguhoioi"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
@@ -28,6 +29,7 @@
             android:layout_below="@id/tv_alarm_item_alias"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="8dp"
+            android:text="biuy8ohj9"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@color/colorAccent" />
@@ -38,6 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
+            android:text="nb87giub"
             android:layout_below="@id/tv_alarm_item_radius"
             android:layout_toLeftOf="@+id/alarm_switch"
             android:layout_toStartOf="@+id/alarm_switch"

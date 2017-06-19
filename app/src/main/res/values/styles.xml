@@ -21,4 +21,36 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="AlarmDayToggle" parent="SelectableButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="AlarmVibrateToggle" parent="SelectableButton">
+        <item name="android:layout_width">@dimen/vibrate_toggle_size</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="srcCompat">@drawable/ic_vibration_24dp</item>
+    </style>
+
+    <style name="SelectableButton">
+        <item name="android:background">?selectableItemBackground</item>
+    </style>
+
+    <style name="Divider">
+        <!-- This is robust against dark/light theme changes. -->
+        <!-- Normally not visible in bottom sheets; workaround is to manually change the background color of the divider-->
+        <item name="android:background">?android:attr/listDivider</item>
+    </style>
+
+    <style name="Divider.Horizontal">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+    </style>
+
+    <style name="Divider.Vertical">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">match_parent</item>
+    </style>
+
 </resources>

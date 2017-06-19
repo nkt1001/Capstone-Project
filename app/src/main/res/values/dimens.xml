@@ -1,4 +1,9 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="text_margin">16dp</dimen>
+    <dimen name="vibrate_toggle_size">48dp</dimen>
+    <dimen name="item_margin_between_elements">4dp</dimen>
+    <dimen name="text_size_medium">18sp</dimen>
+    <dimen name="text_compound_drawable_padding">10dp</dimen>
+    <dimen name="button_text_right_padding">16dp</dimen>
 </resources>
