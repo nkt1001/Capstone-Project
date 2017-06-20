@@ -58,13 +58,11 @@ public class AddressView extends FrameLayout {
     });
 
     public AddressView(Context context) {
-        super(context);
-        init();
+        this(context, null);
     }
 
     public AddressView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+        this(context, attrs, 0);
     }
 
     public AddressView(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -75,8 +73,10 @@ public class AddressView extends FrameLayout {
     private void init() {
         View rootView = inflate(getContext(), R.layout.address_view_layout, this);
         ButterKnife.bind(this, rootView);
-
+//        pbLoad = (ProgressBar) rootView.findViewById(R.id.pb_address_view);
+//        tvAddress = (TextView) rootView.findViewById(R.id.tv_address_view);
         pbLoad.setAlpha(0f);
+
         tvAddress.setAlpha(0f);
     }
 

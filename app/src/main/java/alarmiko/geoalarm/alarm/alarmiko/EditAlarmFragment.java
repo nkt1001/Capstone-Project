@@ -2,8 +2,11 @@ package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.SwitchCompat;
@@ -18,7 +21,13 @@ import android.widget.ToggleButton;
 
 import net.cachapa.expandablelayout.ExpandableLayout;
 
+import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
+import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialog;
+import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton;
+import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 import butterknife.BindView;
 import butterknife.BindViews;
@@ -28,9 +37,11 @@ import butterknife.OnClick;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class AlarmActivityFragment extends Fragment implements View.OnClickListener {
+public class EditAlarmFragment extends Fragment {
 
-    private static final String ARG_SECTION_NUMBER = "alarmiko.AlarmActivityFragment.ARG_SECTION_NUMBER";
+    private static final String TAG = "EditAlarmFragment";
+
+    private static final String ARG_SECTION_NUMBER = "alarmiko.EditAlarmFragment.ARG_SECTION_NUMBER";
     @BindView(R.id.editor_alias)
     EditText mEditTextAlias;
     @BindView(R.id.editor_switch)
@@ -51,14 +62,18 @@ public class AlarmActivityFragment extends Fragment implements View.OnClickListe
 
     private ColorStateList mDayToggleColors;
     private ColorStateList mVibrateColors;
+    private RingtonePickerDialogController mRingtonePickerController;
+    private AlarmController mAlarmController;
 
-    public AlarmActivityFragment() {
+    private Alarm mAlarm;
+
+    public EditAlarmFragment() {
     }
 
-    public static AlarmActivityFragment newInstance(int alarmId) {
-        AlarmActivityFragment fragment = new AlarmActivityFragment();
+    public static EditAlarmFragment newInstance(Alarm alarm) {
+        EditAlarmFragment fragment = new EditAlarmFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_SECTION_NUMBER, alarmId);
+        args.putParcelable(ARG_SECTION_NUMBER, alarm);
         fragment.setArguments(args);
         return fragment;
     }
@@ -66,6 +81,9 @@ public class AlarmActivityFragment extends Fragment implements View.OnClickListe
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // TODO: 20.06.17 change to real id
+        mAlarm = getArguments().getParcelable(ARG_SECTION_NUMBER);
 
         int[][] states = {
                 /*item 1*/{/*states*/android.R.attr.state_checked},
@@ -84,15 +102,30 @@ public class AlarmActivityFragment extends Fragment implements View.OnClickListe
 
         mDayToggleColors = new ColorStateList(states, dayToggleColors);
         mVibrateColors = new ColorStateList(states, vibrateColors);
+
+        mRingtonePickerController = new RingtonePickerDialogController(getFragmentManager(),
+                new RingtonePickerDialog.OnRingtoneSelectedListener() {
+                    @Override
+                    public void onRingtoneSelected(Uri ringtoneUri) {
+                        Log.d(TAG, "Selected ringtone: " + ringtoneUri.toString());
+                        final Alarm oldAlarm = getAlarm();
+                        Alarm newAlarm = oldAlarm.toBuilder()
+                                .ringtone(ringtoneUri.toString())
+                                .build();
+                        oldAlarm.copyMutableFieldsTo(newAlarm);
+                        persistUpdatedAlarm(newAlarm, false);
+                    }
+                }
+        );
+
+        mAlarmController = new AlarmController(getActivity(), null);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_alarm, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_alarm_edit, container, false);
         ButterKnife.bind(this, rootView);
-
-        mTvRadius.setOnClickListener(this);
 
         return rootView;
     }
@@ -112,6 +145,11 @@ public class AlarmActivityFragment extends Fragment implements View.OnClickListe
         persistUpdatedAlarm(newAlarm, false);
     }
 
+    final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
+        mAlarmController.scheduleAlarm(newAlarm, showSnackbar);
+        mAlarmController.save(newAlarm);
+    }
+
     @OnClick({ R.id.day0, R.id.day1, R.id.day2, R.id.day3, R.id.day4, R.id.day5, R.id.day6 })
     void onDayToggled(ToggleButton view) {
         final Alarm oldAlarm = getAlarm();
@@ -128,16 +166,52 @@ public class AlarmActivityFragment extends Fragment implements View.OnClickListe
         persistUpdatedAlarm(newAlarm, true);
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.tv_editor_radius:
-                if (mExpandableLayout.isExpanded()) {
-                    mExpandableLayout.collapse();
-                } else {
-                    mExpandableLayout.expand();
-                }
-                break;
+    @OnClick(R.id.tv_editor_radius)
+    void onExpandLayout(TextView textView) {
+        if (mExpandableLayout.isExpanded()) {
+            mExpandableLayout.collapse();
+        } else {
+            mExpandableLayout.expand();
         }
+    }
+
+    @OnClick(R.id.ringtone)
+    void showRingtonePickerDialog() {
+//        Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+//        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+//                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+//                // The ringtone to show as selected when the dialog is opened
+//                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, getSelectedRingtoneUri())
+//                // Whether to show "Default" item in the list
+//                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, false);
+//        // The ringtone that plays when default option is selected
+//        //.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, DEFAULT_TONE);
+//        // TODO: This is VERY BAD. Use a Controller/Presenter instead.
+//        // The result will be delivered to MainActivity, and then delegated to AlarmsFragment.
+//        ((Activity) getContext()).startActivityForResult(intent, AlarmsFragment.REQUEST_PICK_RINGTONE);
+
+        mRingtonePickerController.show(getSelectedRingtoneUri(), makeTag(R.id.ringtone));
+    }
+
+    private void setVibrate(boolean vibrates) {
+        Utils.setTintList(mBtnVibrate, mBtnVibrate.getDrawable(), mVibrateColors);
+        mBtnVibrate.setChecked(vibrates);
+    }
+
+    private Uri getSelectedRingtoneUri() {
+
+        String ringtone = getAlarm().ringtone();
+        return ringtone.isEmpty() ?
+                RingtoneManager.getActualDefaultRingtoneUri(getContext(), RingtoneManager.TYPE_ALARM)
+                : Uri.parse(ringtone);
+    }
+
+    private String makeTag(@IdRes int viewId) {
+        return FragmentTagUtils.makeTag(EditAlarmFragment.class, viewId, mAlarm.getId());
+    }
+
+    public Alarm getAlarm() {
+
+        return mAlarm;
     }
 }

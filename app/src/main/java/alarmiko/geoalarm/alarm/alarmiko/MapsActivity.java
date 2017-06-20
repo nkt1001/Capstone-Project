@@ -247,7 +247,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void menuClick(View view) {
         Toast.makeText(this, "hello", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, AlarmActivity.class);
+        Intent intent = new Intent(this, AlarmEditActivity.class);
         startActivity(intent);
     }
 

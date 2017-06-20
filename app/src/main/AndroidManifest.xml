@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"
@@ -36,6 +39,43 @@
             android:name="com.google.android.nearby.messages.API_KEY"
             android:value="@string/google_maps_key" />
 
+        <receiver
+            android:name=".alarms.background.UpcomingAlarmReceiver"
+            android:enabled="true"
+            android:exported="false">
+        </receiver>
+
+        <receiver
+            android:name=".alarms.background.PendingAlarmScheduler"
+            android:enabled="true"
+            android:exported="false">
+        </receiver>
+
+        <receiver
+            android:name=".alarms.background.OnBootUpReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".alarms.background.OnBootUpAlarmScheduler"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
+        <service
+            android:name=".alarms.ringtone.playback.AlarmRingtoneService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"
@@ -47,7 +87,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AlarmActivity"
+            android:name=".AlarmEditActivity"
             android:label="@string/title_activity_alarm"
             android:parentActivityName=".MapsActivity"
             android:theme="@style/AppTheme.NoActionBar">

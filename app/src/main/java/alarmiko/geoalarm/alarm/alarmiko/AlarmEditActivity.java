@@ -10,12 +10,12 @@ import android.view.View;
 
 import alarmiko.geoalarm.alarm.alarmiko.dummy.DummyContent;
 
-public class AlarmActivity extends AppCompatActivity implements AlarmListFragment.OnListFragmentInteractionListener {
+public class AlarmEditActivity extends AppCompatActivity implements AlarmListFragment.OnListFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_alarm);
+        setContentView(R.layout.activity_alarm_edit);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -37,7 +37,7 @@ public class AlarmActivity extends AppCompatActivity implements AlarmListFragmen
     @Override
     public void onListFragmentInteraction(DummyContent.DummyItem item) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, AlarmActivityFragment.newInstance(0));
+        transaction.replace(R.id.fragment_container, EditAlarmFragment.newInstance(null));
         transaction.addToBackStack(null);
         transaction.commit();
     }

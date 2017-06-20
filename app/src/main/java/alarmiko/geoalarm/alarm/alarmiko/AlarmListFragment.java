@@ -2,7 +2,6 @@ package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -16,10 +15,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmCursor;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsListCursorLoader;
 import alarmiko.geoalarm.alarm.alarmiko.dummy.DummyContent;
 import alarmiko.geoalarm.alarm.alarmiko.dummy.DummyContent.DummyItem;
 
-public class AlarmListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class AlarmListFragment extends Fragment implements LoaderManager.LoaderCallbacks<AlarmCursor> {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private static final int ALARM_LOADER = 1;
@@ -37,11 +38,6 @@ public class AlarmListFragment extends Fragment implements LoaderManager.LoaderC
         getActivity().supportStartPostponedEnterTransition();
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -113,19 +109,20 @@ public class AlarmListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
+    public Loader<AlarmCursor> onCreateLoader(int id, Bundle args) {
+        return new AlarmsListCursorLoader(getActivity());
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    public void onLoadFinished(Loader<AlarmCursor> loader, AlarmCursor data) {
 
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+    public void onLoaderReset(Loader<AlarmCursor> loader) {
 
     }
+
 
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
