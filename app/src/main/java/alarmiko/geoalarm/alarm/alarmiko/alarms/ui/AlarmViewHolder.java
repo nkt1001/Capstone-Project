@@ -3,23 +3,18 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms.ui;
 
 import android.graphics.drawable.Drawable;
 import android.support.annotation.IdRes;
-import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
-import android.text.format.DateFormat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.philliphsu.bottomsheetpickers.time.BottomSheetTimePickerDialog;
-import com.philliphsu.bottomsheetpickers.time.TimeTextUtils;
-
-import java.util.Date;
+import com.google.android.gms.maps.model.LatLng;
 
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
@@ -27,23 +22,24 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.list.BaseViewHolder;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.OnListItemInteractionListener;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmPreferences;
-import alarmiko.geoalarm.alarm.alarmiko.dialogs.AddLabelDialog;
-import alarmiko.geoalarm.alarm.alarmiko.dialogs.AddLabelDialogController;
-import alarmiko.geoalarm.alarm.alarmiko.dialogs.TimePickerDialogController;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
 import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
 import butterknife.BindView;
+import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
+import butterknife.OnTouch;
 
+import static alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek.NUM_DAYS;
 import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
-public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
-    private static final String TAG = "BaseAlarmViewHolder";
+public class AlarmViewHolder extends BaseViewHolder<Alarm> {
+    private static final String TAG = "AlarmViewHolder";
 
     private final AlarmController mAlarmController;
-    private final AddLabelDialogController mAddLabelDialogController;
-    private final TimePickerDialogController mTimePickerDialogController;
+//    private final AddLabelDialogController mAddLabelDialogController;
+//    private final TimePickerDialogController mTimePickerDialogController;
 
     // TODO: Should we use VectorDrawable type?
     private final Drawable mDismissNowDrawable;
@@ -51,18 +47,22 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
 
     final FragmentManager mFragmentManager;
 
-    @BindView(R.id.time) TextView mTime;
-//    @BindView(R.id.on_off_switch)
+    @BindView(R.id.tv_alarm_item_alias)
+    TextView mAlias;
+    @BindView(R.id.alarm_switch)
     SwitchCompat mSwitch;
-//    @BindView(R.id.label)
-    TextView mLabel;
+    @BindView(R.id.tv_alarm_item_radius)
+    TextView mRadius;
     @BindView(R.id.dismiss)
     Button mDismissButton;
+    @BindView(R.id.tv_alarm_item_info)
+    TextView mInfo;
 
-    public BaseAlarmViewHolder(ViewGroup parent, @LayoutRes int layoutRes,
-                               OnListItemInteractionListener<Alarm> listener,
-                               AlarmController controller) {
-        super(parent, layoutRes, listener);
+
+    public AlarmViewHolder(ViewGroup parent,
+                           OnListItemInteractionListener<Alarm> listener,
+                           AlarmController controller) {
+        super(parent, R.layout.fragment_alarmitem, listener);
         mAlarmController = controller;
         // Because of VH binding, setting drawable resources on views would be bad for performance.
         // Instead, we create and cache the Drawables once.
@@ -73,40 +73,40 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         // or simply pass in an instance of FragmentManager to the ctor.
         AppCompatActivity act = (AppCompatActivity) getContext();
         mFragmentManager = act.getSupportFragmentManager();
-        mAddLabelDialogController = new AddLabelDialogController(mFragmentManager,
-            new AddLabelDialog.OnLabelSetListener() {
-                @Override
-                public void onLabelSet(String label) {
-                    final Alarm oldAlarm = getAlarm();
-                    Alarm newAlarm = oldAlarm.toBuilder()
-                            .label(label)
-                            .build();
-                    oldAlarm.copyMutableFieldsTo(newAlarm);
-                    persistUpdatedAlarm(newAlarm, false);
-                }
-            }
-        );
-        mTimePickerDialogController = new TimePickerDialogController(mFragmentManager, getContext(),
-            new BottomSheetTimePickerDialog.OnTimeSetListener() {
-                @Override
-                public void onTimeSet(ViewGroup viewGroup, int hourOfDay, int minute) {
-                    final Alarm oldAlarm = getAlarm();
-                    // I don't think we need this; scheduling a new alarm that is considered
-                    // equal to a previous alarm will overwrite the previous alarm.
-//                        mAlarmController.cancelAlarm(oldAlarm, false);
-                    Alarm newAlarm = oldAlarm.toBuilder()
-                            .hour(hourOfDay)
-                            .minutes(minute)
-                            .build();
-                    oldAlarm.copyMutableFieldsTo(newAlarm);
-                    // -------------------------------------------
-                    // TOneverDO: precede copyMutableFieldsTo()
-                    newAlarm.setEnabled(true); // Always enabled, esp. if oldAlarm is not enabled
-                    // ----------------------------------------------
-                    persistUpdatedAlarm(newAlarm, true);
-                }
-            }
-        );
+//        mAddLabelDialogController = new AddLabelDialogController(mFragmentManager,
+//            new AddLabelDialog.OnLabelSetListener() {
+//                @Override
+//                public void onLabelSet(String label) {
+//                    final Alarm oldAlarm = getAlarm();
+//                    Alarm newAlarm = oldAlarm.toBuilder()
+//                            .label(label)
+//                            .build();
+//                    oldAlarm.copyMutableFieldsTo(newAlarm);
+//                    persistUpdatedAlarm(newAlarm, false);
+//                }
+//            }
+//        );
+//        mTimePickerDialogController = new TimePickerDialogController(mFragmentManager, getContext(),
+//            new BottomSheetTimePickerDialog.OnTimeSetListener() {
+//                @Override
+//                public void onTimeSet(ViewGroup viewGroup, int hourOfDay, int minute) {
+//                    final Alarm oldAlarm = getAlarm();
+//                    // I don't think we need this; scheduling a new alarm that is considered
+//                    // equal to a previous alarm will overwrite the previous alarm.
+////                        mAlarmController.cancelAlarm(oldAlarm, false);
+//                    Alarm newAlarm = oldAlarm.toBuilder()
+//                            .hour(hourOfDay)
+//                            .minutes(minute)
+//                            .build();
+//                    oldAlarm.copyMutableFieldsTo(newAlarm);
+//                    // -------------------------------------------
+//                    // TOneverDO: precede copyMutableFieldsTo()
+//                    newAlarm.setEnabled(true); // Always enabled, esp. if oldAlarm is not enabled
+//                    // ----------------------------------------------
+//                    persistUpdatedAlarm(newAlarm, true);
+//                }
+//            }
+//        );
     }
 
     @Override
@@ -115,12 +115,26 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         // Items that are not in view will not be bound. If in one orientation the item was in view
         // and in another it is out of view, then the callback for that item will not be restored
         // for the new orientation.
-        mAddLabelDialogController.tryRestoreCallback(makeTag(R.id.editor_alias));
-        mTimePickerDialogController.tryRestoreCallback(makeTag(R.id.time));
-        bindTime(alarm);
+//        mAddLabelDialogController.tryRestoreCallback(makeTag(R.id.editor_alias));
+//        mTimePickerDialogController.tryRestoreCallback(makeTag(R.id.time));
+//        bindTime(alarm);
         bindSwitch(alarm.isEnabled());
         bindDismissButton(alarm);
-        bindLabel(alarm.label());
+        bindAlias(alarm.label());
+        bindRadius(alarm.radius());
+        bindInfo(alarm.coordinates());
+    }
+
+    protected void bindInfo(LatLng coordinates) {
+        setVisibility(mInfo, true);
+        String text = coordinates.latitude + " - " + coordinates.longitude;
+        mInfo.setText(text);
+    }
+
+    protected void bindRadius(int radius) {
+        setVisibility(mRadius, true);
+        String text = getContext().getString(R.string.radius) + " - " + radius;
+        mRadius.setText(text);
     }
 
     /**
@@ -128,9 +142,9 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
      * The default criteria for visibility is if {@code label} has
      * a non-zero length.
      */
-    protected void bindLabel(boolean visible, String label) {
-        setVisibility(mLabel, visible);
-        mLabel.setText(label);
+    protected void bindAlias(boolean visible, String label) {
+        setVisibility(mAlias, visible);
+        mAlias.setText(label);
     }
 
     /**
@@ -169,7 +183,7 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         */
     }
 
-//    @OnTouch(R.id.on_off_switch)
+    @OnTouch(R.id.alarm_switch)
     boolean slide(MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
             mSwitch.setPressed(true); // needed so the OnCheckedChange event calls through
@@ -195,7 +209,7 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
 //        save();
 //    }
 
-//    @OnCheckedChanged(R.id.on_off_switch)
+    @OnCheckedChanged(R.id.alarm_switch)
     void toggle(boolean checked) {
         // http://stackoverflow.com/q/27641705/5055032
         if (mSwitch.isPressed()) { // filters out automatic calls from VH binding
@@ -213,16 +227,16 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         }
     }
 
-    @OnClick(R.id.time)
-    void openTimePicker() {
-        Alarm alarm = getAlarm();
-        mTimePickerDialogController.show(alarm.hour(), alarm.minutes(), makeTag(R.id.time));
-    }
+//    @OnClick(R.id.time)
+//    void openTimePicker() {
+//        Alarm alarm = getAlarm();
+//        mTimePickerDialogController.show(alarm.hour(), alarm.minutes(), makeTag(R.id.time));
+//    }
 
 //    @OnClick(R.id.label)
-    void openLabelEditor() {
-        mAddLabelDialogController.show(mLabel.getText(), makeTag(R.id.editor_alias));
-    }
+//    void openLabelEditor() {
+//        mAddLabelDialogController.show(mLabel.getText(), makeTag(R.id.editor_alias));
+//    }
 
     /**
      * Helper method that should be called each time a change is made to the underlying alarm.
@@ -239,13 +253,13 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         mAlarmController.save(newAlarm);
     }
 
-    private void bindTime(Alarm alarm) {
-        String time = DateFormat.getTimeFormat(getContext()).format(new Date(alarm.ringsAt()));
-        if (DateFormat.is24HourFormat(getContext())) {
-            mTime.setText(time);
-        } else {
-            TimeTextUtils.setText(time, mTime);
-        }
+//    private void bindTime(Alarm alarm) {
+//        String time = DateFormat.getTimeFormat(getContext()).format(new Date(alarm.ringsAt()));
+//        if (DateFormat.is24HourFormat(getContext())) {
+//            mTime.setText(time);
+//        } else {
+//            TimeTextUtils.setText(time, mTime);
+//        }
 
         // Use a mock TextView to get our colors, because its ColorStateList is never
         // mutated for the lifetime of this ViewHolder (even when reused).
@@ -265,7 +279,7 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
 //        int disabled = ContextCompat.getColor(getContext(), R.color.text_color_disabled_light);
         // We only have two states, so we don't care about losing the other state colors.
 //        mTime.setTextColor(alarm.isEnabled() ? def : disabled);
-    }
+//    }
 
     private void bindSwitch(boolean enabled) {
         mSwitch.setChecked(enabled);
@@ -287,12 +301,40 @@ public abstract class BaseAlarmViewHolder extends BaseViewHolder<Alarm> {
         mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, null, null, null);
     }
 
-    private void bindLabel(String label) {
+    private void bindAlias(String label) {
         boolean visible = label.length() > 0;
-        bindLabel(visible, label);
+        bindAlias(visible, label);
+    }
+
+    private void bindDays(Alarm alarm) {
+        int num = alarm.numRecurringDays();
+        String text;
+        if (num == NUM_DAYS) {
+            text = getContext().getString(R.string.every_day);
+        } else if (num == 0) {
+            text = "";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0 /* Ordinal days*/; i < NUM_DAYS; i++) {
+                // What day is at this position in the week?
+                int weekDay = DaysOfWeek.getInstance(getContext()).weekDayAt(i);
+                if (alarm.isRecurring(weekDay)) {
+                    sb.append(DaysOfWeek.getLabel(weekDay)).append(", ");
+                }
+            }
+            // Cut off the last comma and space
+            sb.delete(sb.length() - 2, sb.length());
+            text = sb.toString();
+        }
+        bindDays(num > 0, text);
+    }
+
+    private void bindDays(boolean visible, String text) {
+//        setVisibility(mDays, visible);
+//        mDays.setText(text);
     }
 
     private String makeTag(@IdRes int viewId) {
-        return FragmentTagUtils.makeTag(BaseAlarmViewHolder.class, viewId, getItemId());
+        return FragmentTagUtils.makeTag(AlarmViewHolder.class, viewId, getItemId());
     }
 }

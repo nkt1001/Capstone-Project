@@ -29,7 +29,7 @@ import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.OnClick;
 
-public class ExpandedAlarmViewHolder extends BaseAlarmViewHolder {
+public class ExpandedAlarmViewHolder extends AlarmViewHolder {
     private static final String TAG = "ExpandedAlarmViewHolder";
 
     @BindView(R.id.ok) Button mOk;
@@ -46,7 +46,7 @@ public class ExpandedAlarmViewHolder extends BaseAlarmViewHolder {
 
     public ExpandedAlarmViewHolder(ViewGroup parent, final OnListItemInteractionListener<Alarm> listener,
                                    AlarmController controller) {
-        super(parent, R.layout.fragment_alarmitem, listener, controller);
+        super(parent, listener, controller);
         // Manually bind listeners, or else you'd need to write a getter for the
         // OnListItemInteractionListener in the BaseViewHolder for use in method binding.
         mDelete.setOnClickListener(new View.OnClickListener() {
@@ -121,9 +121,9 @@ public class ExpandedAlarmViewHolder extends BaseAlarmViewHolder {
         bindVibrate(alarm.vibrates());
     }
 
-    @Override
+//    @Override
     protected void bindLabel(boolean visible, String label) {
-        super.bindLabel(true, label);
+//        super.bindLabel(true, label);
     }
 
     @OnClick(R.id.ok)

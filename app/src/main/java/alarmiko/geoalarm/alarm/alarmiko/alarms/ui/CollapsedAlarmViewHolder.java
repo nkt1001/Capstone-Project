@@ -11,14 +11,14 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
 
 import static alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek.NUM_DAYS;
 
-public class CollapsedAlarmViewHolder extends BaseAlarmViewHolder {
+public class CollapsedAlarmViewHolder extends AlarmViewHolder {
 
 //    @BindView(R.id.countdown) AlarmCountdown mCountdown;
 //    @BindView(R.id.recurring_days) TextView mDays; // TODO: use `new DateFormatSymbols().getShortWeekdays()` to set texts
 
     public CollapsedAlarmViewHolder(ViewGroup parent, OnListItemInteractionListener<Alarm> listener,
                                     AlarmController alarmController) {
-        super(parent, R.layout.fragment_alarmitem, listener, alarmController);
+        super(parent, listener, alarmController);
     }
 
     @Override
@@ -40,19 +40,19 @@ public class CollapsedAlarmViewHolder extends BaseAlarmViewHolder {
 //        }
     }
 
-    @Override
-    protected void bindLabel(boolean visible, String label) {
-        // Should also be visible even if label has zero length so mCountdown is properly positioned
-        // next to mLabel. That is, mCountdown's layout position is dependent on mLabel being present.
-
-        // The countdown is visible if the alarm is enabled. We must keep this invariant in sync
-        // with our bindCountdown() logic. If we test against the
-        // visibility of the countdown view itself, we will find it is always visible
-        // at this point, because bindCountdown() has not been called yet. As such, that is
-        // not a valid solution. We unfortunately
-        // cannot change the order of the view binding done in onBind().
-        super.bindLabel(visible || getAlarm().isEnabled(), label);
-    }
+//    @Override
+//    protected void bindLabel(boolean visible, String label) {
+//        // Should also be visible even if label has zero length so mCountdown is properly positioned
+//        // next to mLabel. That is, mCountdown's layout position is dependent on mLabel being present.
+//
+//        // The countdown is visible if the alarm is enabled. We must keep this invariant in sync
+//        // with our bindCountdown() logic. If we test against the
+//        // visibility of the countdown view itself, we will find it is always visible
+//        // at this point, because bindCountdown() has not been called yet. As such, that is
+//        // not a valid solution. We unfortunately
+//        // cannot change the order of the view binding done in onBind().
+//        super.bindLabel(visible || getAlarm().isEnabled(), label);
+//    }
 
     private void bindDays(Alarm alarm) {
         int num = alarm.numRecurringDays();
@@ -82,15 +82,15 @@ public class CollapsedAlarmViewHolder extends BaseAlarmViewHolder {
 //        mDays.setText(text);
     }
 
-    @Override
-    void openLabelEditor() {
-        // DO NOT IMPLEMENT
-    }
-
-    @Override
-    void openTimePicker() {
-        super.openTimePicker();
-        // Pretend we also clicked the itemView, so we get expanded.
-        onClick(itemView);
-    }
+//    @Override
+//    void openLabelEditor() {
+//        // DO NOT IMPLEMENT
+//    }
+//
+//    @Override
+//    void openTimePicker() {
+//        super.openTimePicker();
+//        // Pretend we also clicked the itemView, so we get expanded.
+//        onClick(itemView);
+//    }
 }

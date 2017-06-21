@@ -1,10 +1,10 @@
 
 package alarmiko.geoalarm.alarm.alarmiko.alarms.ui;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.Loader;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,28 +25,52 @@ import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 import static alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils.makeTag;
 
 
-public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHolder, AlarmCursor,
+public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder, AlarmCursor,
         AlarmsCursorAdapter> implements BottomSheetTimePickerDialog.OnTimeSetListener {
     private static final String TAG = "AlarmsFragment";
-    private static final String KEY_EXPANDED_POSITION = "expanded_position";
-    public static final String EXTRA_SCROLL_TO_ALARM_ID = "com.philliphsu.clock2.alarms.extra.SCROLL_TO_ALARM_ID";
+//    private static final String KEY_EXPANDED_POSITION = "expanded_position";
+    public static final String EXTRA_SCROLL_TO_ALARM_ID = "alarms.extra.SCROLL_TO_ALARM_ID";
 
     private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
     private AlarmController mAlarmController;
     private View mSnackbarAnchor;
     private TimePickerDialogController mTimePickerDialogController;
+    @Nullable
+    private Callback mListener;
 
-    private int mExpandedPosition = RecyclerView.NO_POSITION;
+//    private int mExpandedPosition = RecyclerView.NO_POSITION;
+
+    public interface Callback {
+        void onListItemClick(Alarm item, int position);
+        void onListItemDeleted(Alarm item);
+        void onListItemUpdate(Alarm item, int position);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof Callback) {
+            mListener = (Callback) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnListFragmentInteractionListener");
+        }
+    }
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            // Restore the value of the last expanded position here.
-            // We cannot tell the adapter to expand this item until onLoadFinished()
-            // is called.
-            mExpandedPosition = savedInstanceState.getInt(KEY_EXPANDED_POSITION, RecyclerView.NO_POSITION);
-        }
+//        if (savedInstanceState != null) {
+//            // Restore the value of the last expanded position here.
+//            // We cannot tell the adapter to expand this item until onLoadFinished()
+//            // is called.
+//            mExpandedPosition = savedInstanceState.getInt(KEY_EXPANDED_POSITION, RecyclerView.NO_POSITION);
+//        }
         mTimePickerDialogController = new TimePickerDialogController(
                 getFragmentManager(), getActivity(), this);
         mTimePickerDialogController.tryRestoreCallback(makeTimePickerDialogTag());
@@ -107,9 +131,9 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHol
         // we scroll to the updated alarm if its sort order changes.
 
         // Does nothing If there is no expanded position.
-        getAdapter().expand(mExpandedPosition);
+//        getAdapter().expand(mExpandedPosition);
         // We shouldn't continue to keep a reference to this, so clear it.
-        mExpandedPosition = RecyclerView.NO_POSITION;
+//        mExpandedPosition = RecyclerView.NO_POSITION;
     }
 
     @Override
@@ -134,9 +158,12 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHol
 
     @Override
     public void onListItemClick(Alarm item, int position) {
-        boolean expanded = getAdapter().expand(position);
-        if (!expanded) {
-            getAdapter().collapse(position);
+//        boolean expanded = getAdapter().expand(position);
+//        if (!expanded) {
+//            getAdapter().collapse(position);
+//        }
+        if (mListener != null) {
+            mListener.onListItemClick(item, position);
         }
     }
 
@@ -149,6 +176,10 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHol
         // The corresponding VH will be automatically removed from view following
         // the requery, so we don't have to do anything to it.
         mAsyncUpdateHandler.asyncDelete(item);
+
+        if (mListener != null) {
+            mListener.onListItemDeleted(item);
+        }
     }
 
     @Override
@@ -158,18 +189,22 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHol
         // by the VH, the VH remains in its expanded state from before we were
         // called. Tell the adapter reset its expanded position.
         mAsyncUpdateHandler.asyncUpdate(item.getId(), item);
+
+        if (mListener != null) {
+            mListener.onListItemUpdate(item, position);
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     protected void onScrolledToStableId(long id, int position) {
-        boolean expanded = getAdapter().expand(position);
-        if (!expanded) {
-            // Otherwise, it was due to an item update. The VH is expanded
-            // at this point, so reset it.
-            getAdapter().collapse(position);
-        }
+//        boolean expanded = getAdapter().expand(position);
+//        if (!expanded) {
+//            // Otherwise, it was due to an item update. The VH is expanded
+//            // at this point, so reset it.
+//            getAdapter().collapse(position);
+//        }
     }
 
     @Override
@@ -222,7 +257,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, BaseAlarmViewHol
             // page limit, so its members have been initialized (recall that a Fragment in a ViewPager
             // does not actually need to be visible to the user for onCreateView() to onResume() to
             // be called through).
-            outState.putInt(KEY_EXPANDED_POSITION, getAdapter().getExpandedPosition());
+//            outState.putInt(KEY_EXPANDED_POSITION, getAdapter().getExpandedPosition());
         }
     }
 

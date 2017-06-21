@@ -3,6 +3,7 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.auto.value.AutoValue;
 
 import org.json.JSONObject;
@@ -26,6 +27,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
     private boolean enabled;
     private final boolean[] recurringDays = new boolean[NUM_DAYS];
     private boolean ignoreUpcomingRingTime;
+    private int radius;
+    private LatLng latLng;
     // ====================================================
 
     public abstract int hour();
@@ -33,6 +36,9 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
     public abstract String label();
     public abstract String ringtone();
     public abstract boolean vibrates();
+    public abstract int radius();
+    public abstract LatLng coordinates();
+
     /** Initializes a Builder to the same property values as this instance */
     public abstract Builder toBuilder();
 
@@ -47,6 +53,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         target.enabled = this.enabled;
         System.arraycopy(this.recurringDays, 0, target.recurringDays, 0, NUM_DAYS);
         target.ignoreUpcomingRingTime = this.ignoreUpcomingRingTime;
+        target.radius = this.radius();
+        target.latLng = this.coordinates();
     }
 
     public static Builder builder() {
@@ -57,6 +65,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
                 .minutes(0)
                 .label("")
                 .ringtone("")
+                .radius(0)
+                .coordinates(new LatLng(0, 0))
                 .vibrates(false);
     }
 
@@ -233,6 +243,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         dest.writeInt(enabled ? 1 : 0);
         dest.writeBooleanArray(recurringDays);
         dest.writeInt(ignoreUpcomingRingTime ? 1 : 0);
+        dest.writeInt(radius);
+        dest.writeParcelable(latLng, flags);
     }
 
     private static Alarm create(Parcel in) {
@@ -248,6 +260,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         alarm.enabled = in.readInt() != 0;
         in.readBooleanArray(alarm.recurringDays);
         alarm.ignoreUpcomingRingTime = in.readInt() != 0;
+        alarm.radius = in.readInt();
+        alarm.latLng = in.readParcelable(LatLng.class.getClassLoader());
         return alarm;
     }
 
@@ -273,6 +287,8 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         public abstract Builder label(String label);
         public abstract Builder ringtone(String ringtone);
         public abstract Builder vibrates(boolean vibrates);
+        public abstract Builder radius(int radius);
+        public abstract Builder coordinates(LatLng coordinates);
         /* package */ abstract Alarm autoBuild();
 
         public Alarm build() {

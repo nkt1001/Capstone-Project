@@ -8,9 +8,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.ui.AlarmsFragment;
 import alarmiko.geoalarm.alarm.alarmiko.dummy.DummyContent;
 
-public class AlarmEditActivity extends AppCompatActivity implements AlarmListFragment.OnListFragmentInteractionListener {
+public class AlarmEditActivity extends AppCompatActivity implements
+        AlarmListFragment.OnListFragmentInteractionListener,
+        AlarmsFragment.Callback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,16 +34,13 @@ public class AlarmEditActivity extends AppCompatActivity implements AlarmListFra
         });
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.add(R.id.fragment_container, new AlarmListFragment());
+        transaction.add(R.id.fragment_container, new AlarmsFragment());
         transaction.commit();
     }
 
     @Override
     public void onListFragmentInteraction(DummyContent.DummyItem item) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, EditAlarmFragment.newInstance(null));
-        transaction.addToBackStack(null);
-        transaction.commit();
+        showAlarmEditFragment(null);
     }
 
     @Override
@@ -49,5 +50,25 @@ public class AlarmEditActivity extends AppCompatActivity implements AlarmListFra
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onListItemClick(Alarm item, int position) {
+        showAlarmEditFragment(item);
+    }
+
+    private void showAlarmEditFragment(Alarm item) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, EditAlarmFragment.newInstance(item));
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
+
+    @Override
+    public void onListItemDeleted(Alarm item) {
+    }
+
+    @Override
+    public void onListItemUpdate(Alarm item, int position) {
     }
 }

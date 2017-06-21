@@ -29,7 +29,7 @@
             android:layout_below="@id/tv_alarm_item_alias"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="8dp"
-            android:text="biuy8ohj9"
+            android:text="@string/radius"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@color/colorAccent" />
@@ -56,6 +56,15 @@
             android:layout_alignRight="@+id/tv_alarm_item_radius"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"/>
+
+        <Button
+            android:id="@+id/dismiss"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_alarm_item_info"
+            android:text="@string/dismiss_now"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:drawablePadding="@dimen/text_compound_drawable_padding"/>
 
     </RelativeLayout>
 
