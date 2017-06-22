@@ -3,6 +3,8 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms.data;
 
 import android.database.Cursor;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.db.BaseItemCursor;
 
@@ -35,6 +37,11 @@ public class AlarmCursor extends BaseItemCursor<Alarm> {
                 .vibrates(isTrue(AlarmsTable.COLUMN_VIBRATES))
                 .ringtone(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_RINGTONE)))
                 .label(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_LABEL)))
+                .radius(getInt(getColumnIndexOrThrow(AlarmsTable.COLUMN_RADIUS)))
+                .address(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_ADDRESS)))
+                .coordinates(new LatLng(
+                        getDouble(getColumnIndexOrThrow(AlarmsTable.COLUMN_LAT)),
+                        getDouble(getColumnIndexOrThrow(AlarmsTable.COLUMN_LNG))))
                 .build();
         alarm.setId(getLong(getColumnIndexOrThrow(AlarmsTable.COLUMN_ID)));
         alarm.setEnabled(isTrue(AlarmsTable.COLUMN_ENABLED));

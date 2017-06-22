@@ -4,6 +4,7 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms.data;
 import android.database.sqlite.SQLiteDatabase;
 
 public final class AlarmsTable {
+
     private AlarmsTable() {}
 
     // TODO: Consider defining index constants for each column,
@@ -14,14 +15,14 @@ public final class AlarmsTable {
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_HOUR = "hour";
     public static final String COLUMN_MINUTES = "minutes";
+    public static final String COLUMN_LAT = "latitude";
+    public static final String COLUMN_LNG = "longitude";
+    public static final String COLUMN_RADIUS = "radius";
+    public static final String COLUMN_ADDRESS = "address";
     public static final String COLUMN_LABEL = "label";
     public static final String COLUMN_RINGTONE = "ringtone";
     public static final String COLUMN_VIBRATES = "vibrates";
     public static final String COLUMN_ENABLED = "enabled";
-
-    // TODO: Delete this column, becuase new sort order does not consider it
-    @Deprecated
-    public static final String COLUMN_RING_TIME_MILLIS = "ring_time_millis";
 
     public static final String COLUMN_SNOOZING_UNTIL_MILLIS = "snoozing_until_millis";
     public static final String COLUMN_SUNDAY = "sunday";
@@ -32,12 +33,6 @@ public final class AlarmsTable {
     public static final String COLUMN_FRIDAY = "friday";
     public static final String COLUMN_SATURDAY = "saturday";
     public static final String COLUMN_IGNORE_UPCOMING_RING_TIME = "ignore_upcoming_ring_time";
-
-    // First sort by ring time in ascending order (smaller values first),
-    // then break ties by sorting by id in ascending order.
-    @Deprecated
-    private static final String SORT_ORDER =
-            COLUMN_RING_TIME_MILLIS + " ASC, " + COLUMN_ID + " ASC";
 
     public static final String NEW_SORT_ORDER = COLUMN_HOUR + " ASC, "
             + COLUMN_MINUTES + " ASC, "
@@ -78,7 +73,9 @@ public final class AlarmsTable {
                 + COLUMN_RINGTONE + " TEXT NOT NULL, "
                 + COLUMN_VIBRATES + " INTEGER NOT NULL, "
                 + COLUMN_ENABLED + " INTEGER NOT NULL, "
-                + COLUMN_RING_TIME_MILLIS + " INTEGER NOT NULL, "
+                + COLUMN_LAT + " REAL DEFAULT 0, "
+                + COLUMN_LNG + " REAL DEFAULT 0, "
+                + COLUMN_RADIUS + " INTEGER, "
                 + COLUMN_SNOOZING_UNTIL_MILLIS + " INTEGER, "
                 + COLUMN_SUNDAY + " INTEGER NOT NULL DEFAULT 0, "
                 + COLUMN_MONDAY + " INTEGER NOT NULL DEFAULT 0, "

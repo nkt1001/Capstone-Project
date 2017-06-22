@@ -29,6 +29,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
     private boolean ignoreUpcomingRingTime;
     private int radius;
     private LatLng latLng;
+    private String address;
     // ====================================================
 
     public abstract int hour();
@@ -38,6 +39,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
     public abstract boolean vibrates();
     public abstract int radius();
     public abstract LatLng coordinates();
+    public abstract String address();
 
     /** Initializes a Builder to the same property values as this instance */
     public abstract Builder toBuilder();
@@ -55,6 +57,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         target.ignoreUpcomingRingTime = this.ignoreUpcomingRingTime;
         target.radius = this.radius();
         target.latLng = this.coordinates();
+        target.address = this.address();
     }
 
     public static Builder builder() {
@@ -67,6 +70,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
                 .ringtone("")
                 .radius(0)
                 .coordinates(new LatLng(0, 0))
+                .address("")
                 .vibrates(false);
     }
 
@@ -244,6 +248,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         dest.writeBooleanArray(recurringDays);
         dest.writeInt(ignoreUpcomingRingTime ? 1 : 0);
         dest.writeInt(radius);
+        dest.writeString(address);
         dest.writeParcelable(latLng, flags);
     }
 
@@ -261,6 +266,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         in.readBooleanArray(alarm.recurringDays);
         alarm.ignoreUpcomingRingTime = in.readInt() != 0;
         alarm.radius = in.readInt();
+        alarm.address = in.readString();
         alarm.latLng = in.readParcelable(LatLng.class.getClassLoader());
         return alarm;
     }
@@ -289,6 +295,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         public abstract Builder vibrates(boolean vibrates);
         public abstract Builder radius(int radius);
         public abstract Builder coordinates(LatLng coordinates);
+        public abstract Builder address(String address);
         /* package */ abstract Alarm autoBuild();
 
         public Alarm build() {

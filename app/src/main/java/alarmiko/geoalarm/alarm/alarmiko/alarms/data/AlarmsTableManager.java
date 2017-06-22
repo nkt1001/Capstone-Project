@@ -60,7 +60,10 @@ public class AlarmsTableManager extends DatabaseTableManager<Alarm> {
         values.put(AlarmsTable.COLUMN_RINGTONE, alarm.ringtone());
         values.put(AlarmsTable.COLUMN_VIBRATES, alarm.vibrates());
         values.put(AlarmsTable.COLUMN_ENABLED, alarm.isEnabled());
-        values.put(AlarmsTable.COLUMN_RING_TIME_MILLIS, alarm.ringsAt());
+        values.put(AlarmsTable.COLUMN_RADIUS, alarm.radius());
+        values.put(AlarmsTable.COLUMN_LAT, alarm.coordinates().latitude);
+        values.put(AlarmsTable.COLUMN_LNG, alarm.coordinates().longitude);
+        values.put(AlarmsTable.COLUMN_ADDRESS, alarm.address());
         values.put(AlarmsTable.COLUMN_SNOOZING_UNTIL_MILLIS, alarm.snoozingUntil());
         values.put(AlarmsTable.COLUMN_SUNDAY, alarm.isRecurring(SUNDAY));
         values.put(AlarmsTable.COLUMN_MONDAY, alarm.isRecurring(MONDAY));

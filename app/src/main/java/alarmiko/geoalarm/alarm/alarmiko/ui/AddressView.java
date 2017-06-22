@@ -115,6 +115,10 @@ public class AddressView extends FrameLayout {
         }
     }
 
+    public String getAddressString() {
+        return tvAddress.getText().toString();
+    }
+
     private void setAddress(String result) {
         if (result == null) {
             hide();
@@ -148,7 +152,8 @@ public class AddressView extends FrameLayout {
                 List<Address> addresses = mmGeoCoder.getFromLocation(mmLatLng.latitude, mmLatLng.longitude, 1);
 
                 if (addresses.size() > 0) {
-                    address = addresses.get(0).getAddressLine(0);
+                    Address addressObj = addresses.get(0);
+                    address = addressObj.toString();
                 }
 
             } catch (IOException e) {

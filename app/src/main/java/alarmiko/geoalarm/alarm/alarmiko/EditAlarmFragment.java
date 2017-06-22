@@ -127,6 +127,8 @@ public class EditAlarmFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_alarm_edit, container, false);
         ButterKnife.bind(this, rootView);
 
+        mTvRadius.setText(mAlarm.address());
+
         return rootView;
     }
 

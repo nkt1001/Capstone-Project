@@ -16,6 +16,11 @@ public class AlarmEditActivity extends AppCompatActivity implements
         AlarmListFragment.OnListFragmentInteractionListener,
         AlarmsFragment.Callback {
 
+    public static final String ACTION_EDIT_ALARM = "alarm.alarmiko.AlarmEditActivity.ACTION_EDIT_ALARM";
+    public static final String ACTION_ALARM_LIST = "alarm.alarmiko.AlarmEditActivity.ACTION_ALARM_LIST";
+
+    public static final String EXTRA_PICKED_ADDRESS = "alarm.alarmiko.AlarmEditActivity.EXTRA_PICKED_ADDRESS";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,16 +30,30 @@ public class AlarmEditActivity extends AppCompatActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+
+        String action = getIntent().getAction();
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.add(R.id.fragment_container, new AlarmsFragment());
+
+        if (action == null || ACTION_ALARM_LIST.equals(action)) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            });
+
+            transaction.add(R.id.fragment_container, new AlarmsFragment());
+        } else {
+            fab.setVisibility(View.GONE);
+            String address = getIntent().getStringExtra(EXTRA_PICKED_ADDRESS);
+
+            transaction.add(R.id.fragment_container, EditAlarmFragment.newInstance(Alarm.builder()
+                    .address(address != null ? address : "")
+                    .build()));
+        }
+
         transaction.commit();
     }
 

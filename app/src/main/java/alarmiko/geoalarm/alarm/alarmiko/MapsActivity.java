@@ -1,6 +1,5 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -12,7 +11,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -24,8 +22,9 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -51,7 +50,7 @@ public class MapsActivity extends AppCompatActivity implements
      * @see #onRequestPermissionsResult(int, String[], int[])
      */
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private static final int REQUEST_PLACE_PICKER = 101;
+    private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 101;
     private static final int ALARM_LOADER = 1001;
 
     /**
@@ -124,13 +123,14 @@ public class MapsActivity extends AppCompatActivity implements
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
 
+            mImvCenterMarker.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
+
             new CurrentLocationService(this).getMyLocation(new CurrentLocationService.CurrentLocationServiceCallback() {
                 @Override
                 public void currentLocation(Location location) {
                     if (location == null) {
                         return;
                     }
-                    mImvCenterMarker.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
                     mMap.moveCamera(CameraUpdateFactory
                             .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17f));
                 }
@@ -196,7 +196,10 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void okClick(View view) {
-        Toast.makeText(this, "hello ok", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(MapsActivity.this, AlarmEditActivity.class);
+        intent.setAction(AlarmEditActivity.ACTION_EDIT_ALARM)
+                .putExtra(AlarmEditActivity.EXTRA_PICKED_ADDRESS, mAddressView.getAddressString());
+        startActivity(intent);
     }
 
 
@@ -204,23 +207,18 @@ public class MapsActivity extends AppCompatActivity implements
     protected void onActivityResult(int requestCode,
                                     int resultCode, Intent data) {
 
-        if (requestCode == REQUEST_PLACE_PICKER
-                && resultCode == Activity.RESULT_OK) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+                Log.i(TAG, "Place: " + place.getName());
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Log.i(TAG, status.getStatusMessage());
 
-            // The user has selected a place. Extract the name and address.
-            final Place place = PlacePicker.getPlace(this, data);
-
-            final CharSequence name = place.getName();
-            final CharSequence address = place.getAddress();
-            String attributions = PlacePicker.getAttributions(data);
-            if (attributions == null) {
-                attributions = "";
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
             }
-
-            Log.d(TAG, "onActivityResult: name = " + name);
-            Log.d(TAG, "onActivityResult: address = " + address);
-            Log.d(TAG, "onActivityResult: attributions = " + Html.fromHtml(attributions));
-
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -230,24 +228,21 @@ public class MapsActivity extends AppCompatActivity implements
         Toast.makeText(this, "change address", Toast.LENGTH_SHORT).show();
         // Construct an intent for the place picker
         try {
-            PlacePicker.IntentBuilder intentBuilder =
-                    new PlacePicker.IntentBuilder();
-            Intent intent = intentBuilder.build(this);
-            // Start the intent by requesting a result,
-            // identified by a request code.
-            startActivityForResult(intent, REQUEST_PLACE_PICKER);
-
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
         } catch (GooglePlayServicesRepairableException e) {
-            // ...
+            // TODO: Handle the error.
         } catch (GooglePlayServicesNotAvailableException e) {
-            // ...
-        }
 
+        }
     }
 
     public void menuClick(View view) {
         Toast.makeText(this, "hello", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, AlarmEditActivity.class);
+        intent.setAction(AlarmEditActivity.ACTION_ALARM_LIST);
         startActivity(intent);
     }
 
