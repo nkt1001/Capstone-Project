@@ -6,6 +6,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
@@ -47,11 +48,11 @@ public class AlarmEditActivity extends AppCompatActivity implements
             transaction.add(R.id.fragment_container, new AlarmsFragment());
         } else {
             fab.setVisibility(View.GONE);
-            String address = getIntent().getStringExtra(EXTRA_PICKED_ADDRESS);
+            Alarm alarm = getIntent().getParcelableExtra(EXTRA_PICKED_ADDRESS);
 
-            transaction.add(R.id.fragment_container, EditAlarmFragment.newInstance(Alarm.builder()
-                    .address(address != null ? address : "")
-                    .build()));
+            Log.d("TAG", "onCreate: alarm = " + alarm);
+
+            transaction.add(R.id.fragment_container, EditAlarmFragment.newInstance(alarm));
         }
 
         transaction.commit();

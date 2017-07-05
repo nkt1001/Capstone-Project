@@ -1,159 +1,178 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/alarm_editor_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
     android:orientation="vertical"
     tools:context="alarmiko.geoalarm.alarm.alarmiko.EditAlarmFragment">
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/editor_alias"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:hint="@string/alias"
-            android:padding="8dp"
-            android:textSize="40sp" />
+        android:orientation="vertical"
+        tools:context="alarmiko.geoalarm.alarm.alarmiko.EditAlarmFragment">
 
 
-        <android.support.v7.widget.SwitchCompat
-            android:id="@+id/editor_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:padding="8dp" />
-    </LinearLayout>
-
-    <View style="@style/Divider.Horizontal"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/tv_editor_radius"
-        android:text="@string/radius"
-        android:padding="8dp"
-        style="?android:textAppearanceLarge"/>
-
-    <net.cachapa.expandablelayout.ExpandableLayout
-        android:id="@+id/expandable_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:el_duration="300"
-        app:el_expanded="false">
-
-        <SeekBar
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="16dp"/>
+            android:orientation="horizontal">
 
-    </net.cachapa.expandablelayout.ExpandableLayout>
+            <EditText
+                android:id="@+id/editor_alias"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="@string/alias"
+                android:padding="8dp"
+                android:textSize="40sp" />
 
-    <View style="@style/Divider.Horizontal"/>
 
-    <LinearLayout
-        android:id="@+id/days"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/editor_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:padding="8dp" />
+        </LinearLayout>
 
-        <ToggleButton
-            android:id="@+id/day0"
-            style="@style/AlarmDayToggle"/>
+        <View style="@style/Divider.Horizontal"/>
 
-        <ToggleButton
-            android:id="@+id/day1"
-            style="@style/AlarmDayToggle"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_editor_radius"
+            android:text="@string/radius"
+            android:padding="8dp"
+            style="?android:textAppearanceLarge"/>
 
-        <ToggleButton
-            android:id="@+id/day2"
-            style="@style/AlarmDayToggle"/>
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/expandable_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:el_duration="300"
+            app:el_expanded="false">
 
-        <ToggleButton
-            android:id="@+id/day3"
-            style="@style/AlarmDayToggle"/>
+            <fragment
+                android:id="@+id/map"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                class="com.google.android.gms.maps.SupportMapFragment"
+                app:uiCompass="false"
+                app:uiRotateGestures="false"
+                app:uiScrollGestures="false"
+                app:uiTiltGestures="false"
+                app:uiZoomControls="false"
+                app:uiZoomGestures="false" />
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp"/>
 
-        <ToggleButton
-            android:id="@+id/day4"
-            style="@style/AlarmDayToggle"/>
+        </net.cachapa.expandablelayout.ExpandableLayout>
 
-        <ToggleButton
-            android:id="@+id/day5"
-            style="@style/AlarmDayToggle"/>
+        <View style="@style/Divider.Horizontal"/>
 
-        <ToggleButton
-            android:id="@+id/day6"
-            style="@style/AlarmDayToggle"/>
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/days"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/item_margin_between_elements">
+            <ToggleButton
+                android:id="@+id/day0"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day1"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day2"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day3"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day4"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day5"
+                style="@style/AlarmDayToggle"/>
+
+            <ToggleButton
+                android:id="@+id/day6"
+                style="@style/AlarmDayToggle"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="@dimen/item_margin_between_elements">
+
+            <Button
+                android:id="@+id/ringtone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="@string/ringtone"
+                android:gravity="center_vertical"
+                android:textAppearance="@style/TextAppearance.AppCompat"
+                android:textSize="@dimen/text_size_medium"
+                android:drawableStart="@drawable/ic_ringtone_24dp"
+                android:drawableLeft="@drawable/ic_ringtone_24dp"
+                android:drawablePadding="@dimen/text_compound_drawable_padding"/>
+
+            <alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton
+                android:id="@+id/vibrate"
+                style="@style/AlarmVibrateToggle"/>
+
+        </LinearLayout>
 
         <Button
-            android:id="@+id/ringtone"
-            android:layout_width="0dp"
+            android:id="@+id/dismiss"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:text="@string/ringtone"
-            android:gravity="center_vertical"
-            android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="@dimen/text_size_medium"
-            android:drawableStart="@drawable/ic_ringtone_24dp"
-            android:drawableLeft="@drawable/ic_ringtone_24dp"
+            android:text="@string/dismiss_now"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_marginBottom="@dimen/item_margin_between_elements"
             android:drawablePadding="@dimen/text_compound_drawable_padding"/>
 
-        <alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton
-            android:id="@+id/vibrate"
-            style="@style/AlarmVibrateToggle"/>
+        <View style="@style/Divider.Horizontal"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                android:text="@string/delete"/>
+
+            <Button
+                android:id="@+id/ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                android:text="@android:string/ok"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/dismiss"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/dismiss_now"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_marginBottom="@dimen/item_margin_between_elements"
-        android:drawablePadding="@dimen/text_compound_drawable_padding"/>
-
-    <View style="@style/Divider.Horizontal"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end">
-
-        <Button
-            android:id="@+id/delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:text="@string/delete"/>
-
-        <Button
-            android:id="@+id/ok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:text="@android:string/ok"/>
-
-    </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

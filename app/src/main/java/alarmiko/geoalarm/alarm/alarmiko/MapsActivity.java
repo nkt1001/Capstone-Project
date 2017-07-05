@@ -31,6 +31,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AddressView;
 import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
@@ -197,8 +198,15 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void okClick(View view) {
         Intent intent = new Intent(MapsActivity.this, AlarmEditActivity.class);
+
+        Alarm alarm = Alarm.builder()
+                .address(mAddressView.getAddressString())
+                .coordinates(mMap.getCameraPosition().target)
+                .build();
+        Log.d(TAG, "okClick: " + alarm);
+
         intent.setAction(AlarmEditActivity.ACTION_EDIT_ALARM)
-                .putExtra(AlarmEditActivity.EXTRA_PICKED_ADDRESS, mAddressView.getAddressString());
+                .putExtra(AlarmEditActivity.EXTRA_PICKED_ADDRESS, alarm);
         startActivity(intent);
     }
 

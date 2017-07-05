@@ -19,6 +19,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
+
 import net.cachapa.expandablelayout.ExpandableLayout;
 
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
@@ -37,9 +43,11 @@ import butterknife.OnClick;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class EditAlarmFragment extends Fragment {
+public class EditAlarmFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String TAG = "EditAlarmFragment";
+
+    private GoogleMap mMap;
 
     private static final String ARG_SECTION_NUMBER = "alarmiko.EditAlarmFragment.ARG_SECTION_NUMBER";
     @BindView(R.id.editor_alias)
@@ -127,9 +135,18 @@ public class EditAlarmFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_alarm_edit, container, false);
         ButterKnife.bind(this, rootView);
 
+
         mTvRadius.setText(mAlarm.address());
 
         return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
     }
 
     @OnClick(R.id.vibrate)
@@ -215,5 +232,14 @@ public class EditAlarmFragment extends Fragment {
     public Alarm getAlarm() {
 
         return mAlarm;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        mMap.moveCamera(CameraUpdateFactory
+                .newLatLngZoom(mAlarm.coordinates(), 17f));
+        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(100));
     }
 }

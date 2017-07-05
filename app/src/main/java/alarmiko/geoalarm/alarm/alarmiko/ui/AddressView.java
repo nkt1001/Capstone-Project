@@ -153,7 +153,7 @@ public class AddressView extends FrameLayout {
 
                 if (addresses.size() > 0) {
                     Address addressObj = addresses.get(0);
-                    address = addressObj.toString();
+                    address = addressObj.getAddressLine(0);
                 }
 
             } catch (IOException e) {

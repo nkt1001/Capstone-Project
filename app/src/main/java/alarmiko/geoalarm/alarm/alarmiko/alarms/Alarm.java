@@ -238,6 +238,9 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         dest.writeString(label());
         dest.writeString(ringtone());
         dest.writeInt(vibrates() ? 1 : 0);
+        dest.writeInt(radius());
+        dest.writeString(address());
+        dest.writeParcelable(coordinates(), flags);
         // Mutable fields must be written after the immutable fields,
         // because when we recreate the object, we can't initialize
         // those mutable fields until after we call build(). Values
@@ -247,9 +250,6 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         dest.writeInt(enabled ? 1 : 0);
         dest.writeBooleanArray(recurringDays);
         dest.writeInt(ignoreUpcomingRingTime ? 1 : 0);
-        dest.writeInt(radius);
-        dest.writeString(address);
-        dest.writeParcelable(latLng, flags);
     }
 
     private static Alarm create(Parcel in) {
@@ -259,15 +259,15 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
                 .label(in.readString())
                 .ringtone(in.readString())
                 .vibrates(in.readInt() != 0)
+                .radius(in.readInt())
+                .address(in.readString())
+                .coordinates((LatLng) in.readParcelable(LatLng.class.getClassLoader()))
                 .build();
         alarm.setId(in.readLong());
         alarm.snoozingUntilMillis = in.readLong();
         alarm.enabled = in.readInt() != 0;
         in.readBooleanArray(alarm.recurringDays);
         alarm.ignoreUpcomingRingTime = in.readInt() != 0;
-        alarm.radius = in.readInt();
-        alarm.address = in.readString();
-        alarm.latLng = in.readParcelable(LatLng.class.getClassLoader());
         return alarm;
     }
 

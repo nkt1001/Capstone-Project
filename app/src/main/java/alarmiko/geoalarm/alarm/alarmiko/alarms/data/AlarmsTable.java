@@ -76,6 +76,7 @@ public final class AlarmsTable {
                 + COLUMN_LAT + " REAL DEFAULT 0, "
                 + COLUMN_LNG + " REAL DEFAULT 0, "
                 + COLUMN_RADIUS + " INTEGER, "
+                + COLUMN_ADDRESS + " TEXT, "
                 + COLUMN_SNOOZING_UNTIL_MILLIS + " INTEGER, "
                 + COLUMN_SUNDAY + " INTEGER NOT NULL DEFAULT 0, "
                 + COLUMN_MONDAY + " INTEGER NOT NULL DEFAULT 0, "
