@@ -2,6 +2,7 @@ package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Point;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +25,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.VisibleRegion;
 
 import net.cachapa.expandablelayout.ExpandableLayout;
 
@@ -34,6 +38,7 @@ import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialog;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton;
 import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
+import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 import butterknife.BindView;
 import butterknife.BindViews;
@@ -43,7 +48,7 @@ import butterknife.OnClick;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class EditAlarmFragment extends Fragment implements OnMapReadyCallback {
+public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener, GoogleMap.OnCameraMoveStartedListener {
 
     private static final String TAG = "EditAlarmFragment";
 
@@ -240,6 +245,46 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback {
 
         mMap.moveCamera(CameraUpdateFactory
                 .newLatLngZoom(mAlarm.coordinates(), 17f));
-        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(100));
+
+        mMap.setOnCameraMoveStartedListener(this);
+        mMap.setOnCameraIdleListener(this);
+    }
+
+    private void drawMapCircle() {
+
+        Log.d(TAG, "drawMapCircle: ");
+        mMap.setOnCameraIdleListener(null);
+        mMap.setOnCameraMoveStartedListener(null);
+
+        mMap.moveCamera(CameraUpdateFactory
+                .newLatLng(mAlarm.coordinates()));
+
+        mMap.clear();
+
+        mMap.addMarker(new MarkerOptions().position(mAlarm.coordinates()));
+
+        VisibleRegion visibleRegion = mMap.getProjection().getVisibleRegion();
+        Point x = mMap.getProjection().toScreenLocation(visibleRegion.farRight);
+        Point y = mMap.getProjection().toScreenLocation(visibleRegion.nearLeft);
+
+        Point radiusPoint = x.x < y.y ? y : x;
+
+        LatLng radius = mMap.getProjection().fromScreenLocation(new Point((radiusPoint.x / 2), (radiusPoint.y / 2)));
+
+        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(MapUtils.toRadiusMeters(mAlarm.coordinates(), radius)));
+        mMap.setOnCameraMoveStartedListener(EditAlarmFragment.this);
+
+    }
+
+    @Override
+    public void onCameraIdle() {
+        Log.d(TAG, "onCameraIdle: ");
+        drawMapCircle();
+    }
+
+    @Override
+    public void onCameraMoveStarted(int i) {
+        Log.d(TAG, "onCameraMoveStarted: ");
+        mMap.setOnCameraIdleListener(EditAlarmFragment.this);
     }
 }

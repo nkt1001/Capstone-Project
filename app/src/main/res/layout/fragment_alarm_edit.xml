@@ -61,19 +61,14 @@
             <fragment
                 android:id="@+id/map"
                 android:layout_width="match_parent"
-                android:layout_height="160dp"
+                android:layout_height="240dp"
                 class="com.google.android.gms.maps.SupportMapFragment"
                 app:uiCompass="false"
                 app:uiRotateGestures="false"
                 app:uiScrollGestures="false"
                 app:uiTiltGestures="false"
                 app:uiZoomControls="false"
-                app:uiZoomGestures="false" />
-            <SeekBar
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="16dp"/>
+                app:uiZoomGestures="true" />
 
         </net.cachapa.expandablelayout.ExpandableLayout>
 
