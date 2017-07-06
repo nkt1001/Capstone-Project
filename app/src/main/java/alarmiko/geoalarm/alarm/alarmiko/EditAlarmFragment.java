@@ -3,6 +3,7 @@ package alarmiko.geoalarm.alarm.alarmiko;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.os.Vibrator;
 import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -141,6 +143,10 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         ButterKnife.bind(this, rootView);
 
 
+
+        bindDays(mAlarm);
+        bindRingtone();
+        setVibrate(mAlarm.vibrates());
         mTvRadius.setText(mAlarm.address());
 
         return rootView;
@@ -156,6 +162,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 
     @OnClick(R.id.vibrate)
     void onVibrateToggled() {
+        Log.d(TAG, "onVibrateToggled: ");
         final boolean checked = mBtnVibrate.isChecked();
         if (checked) {
             Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -215,6 +222,30 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 //        ((Activity) getContext()).startActivityForResult(intent, AlarmsFragment.REQUEST_PICK_RINGTONE);
 
         mRingtonePickerController.show(getSelectedRingtoneUri(), makeTag(R.id.ringtone));
+    }
+
+    private void bindDays(Alarm alarm) {
+        for (int i = 0; i < mBtnDays.length; i++) {
+            mBtnDays[i].setTextColor(mDayToggleColors);
+            int weekDay = DaysOfWeek.getInstance(getContext()).weekDayAt(i);
+            String label = DaysOfWeek.getLabel(weekDay);
+            mBtnDays[i].setTextOn(label);
+            mBtnDays[i].setTextOff(label);
+            mBtnDays[i].setChecked(alarm.isRecurring(weekDay));
+        }
+    }
+
+    private void bindRingtone() {
+        int iconTint = Utils.getTextColorFromThemeAttr(getContext(), R.attr.themedIconTint);
+
+        Drawable ringtoneIcon = mBtnRingtone.getCompoundDrawablesRelative()[0/*start*/];
+        ringtoneIcon = DrawableCompat.wrap(ringtoneIcon.mutate());
+        DrawableCompat.setTint(ringtoneIcon, iconTint);
+        mBtnRingtone.setCompoundDrawablesRelativeWithIntrinsicBounds(ringtoneIcon, null, null, null);
+
+        String title = RingtoneManager.getRingtone(getContext(),
+                getSelectedRingtoneUri()).getTitle(getContext());
+        mBtnRingtone.setText(title);
     }
 
     private void setVibrate(boolean vibrates) {
