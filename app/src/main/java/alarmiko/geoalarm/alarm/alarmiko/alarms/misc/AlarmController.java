@@ -189,10 +189,12 @@ public final class AlarmController {
 
     public void save(final Alarm alarm) {
         // TODO: Will using the Runnable like this cause a memory leak?
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                mTableManager.updateItem(alarm.getId(), alarm);
+                int i = mTableManager.updateItem(alarm.getId(), alarm);
+                Log.d(TAG, "run: update " + i);
             }
         }).start();
     }

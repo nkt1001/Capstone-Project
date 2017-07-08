@@ -131,7 +131,7 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
         mInfo.setText(text);
     }
 
-    protected void bindRadius(int radius) {
+    protected void bindRadius(double radius) {
         setVisibility(mRadius, true);
         String text = getContext().getString(R.string.radius) + " - " + radius;
         mRadius.setText(text);

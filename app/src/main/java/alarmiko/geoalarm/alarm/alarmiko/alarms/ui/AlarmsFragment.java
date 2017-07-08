@@ -16,10 +16,9 @@ import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmCursor;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsListCursorLoader;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AsyncAlarmsTableUpdateHandler;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.RecyclerViewFragment;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.TimePickerDialogController;
+import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils.makeTag;
@@ -31,26 +30,19 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
 //    private static final String KEY_EXPANDED_POSITION = "expanded_position";
     public static final String EXTRA_SCROLL_TO_ALARM_ID = "alarms.extra.SCROLL_TO_ALARM_ID";
 
-    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
-    private AlarmController mAlarmController;
-    private View mSnackbarAnchor;
+//    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
+//    private AlarmController mAlarmController;
+//    private View mSnackbarAnchor;
     private TimePickerDialogController mTimePickerDialogController;
-    @Nullable
-    private Callback mListener;
+    private AlarmEditInterface mListener;
 
 //    private int mExpandedPosition = RecyclerView.NO_POSITION;
-
-    public interface Callback {
-        void onListItemClick(Alarm item, int position);
-        void onListItemDeleted(Alarm item);
-        void onListItemUpdate(Alarm item, int position);
-    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof Callback) {
-            mListener = (Callback) context;
+        if (context instanceof AlarmEditInterface) {
+            mListener = (AlarmEditInterface) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInteractionListener");
@@ -84,10 +76,10 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mSnackbarAnchor = getActivity().findViewById(R.id.main_content);
-        mAlarmController = new AlarmController(getActivity(), mSnackbarAnchor);
-        mAsyncUpdateHandler = new AsyncAlarmsTableUpdateHandler(getActivity(),
-                mSnackbarAnchor, this, mAlarmController);
+//        mSnackbarAnchor = getActivity().findViewById(R.id.main_content);
+//        mAlarmController = new AlarmController(getActivity(), mSnackbarAnchor);
+//        mAsyncUpdateHandler = new AsyncAlarmsTableUpdateHandler(getActivity(),
+//                mSnackbarAnchor, this, mAlarmController);
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -115,7 +107,9 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         Log.d(TAG, "onResume()");
         // Show the pending Snackbar, if any, that was prepared for us
         // by another app component.
-        DelayedSnackbarHandler.makeAndShow(mSnackbarAnchor);
+        if (mListener != null) {
+            DelayedSnackbarHandler.makeAndShow(mListener.getSnackbarAnchor());
+        }
     }
 
     @Override
@@ -143,7 +137,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
 
     @Override
     protected AlarmsCursorAdapter onCreateAdapter() {
-        return new AlarmsCursorAdapter(this, mAlarmController);
+        return new AlarmsCursorAdapter(this, mListener.getAlarmController());
     }
 
     @Override
@@ -175,7 +169,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     public void onListItemDeleted(final Alarm item) {
         // The corresponding VH will be automatically removed from view following
         // the requery, so we don't have to do anything to it.
-        mAsyncUpdateHandler.asyncDelete(item);
+//        mAsyncUpdateHandler.asyncDelete(item);
 
         if (mListener != null) {
             mListener.onListItemDeleted(item);
@@ -188,7 +182,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         // be in view. While the requery will probably update the values displayed
         // by the VH, the VH remains in its expanded state from before we were
         // called. Tell the adapter reset its expanded position.
-        mAsyncUpdateHandler.asyncUpdate(item.getId(), item);
+//        mAsyncUpdateHandler.asyncUpdate(item.getId(), item);
 
         if (mListener != null) {
             mListener.onListItemUpdate(item, position);
@@ -216,7 +210,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
                 .minutes(minute)
                 .build();
         alarm.setEnabled(true);
-        mAsyncUpdateHandler.asyncInsert(alarm);
+//        mAsyncUpdateHandler.asyncInsert(alarm);
     }
 
     @Override

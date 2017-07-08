@@ -33,11 +33,13 @@ import com.google.android.gms.maps.model.VisibleRegion;
 
 import net.cachapa.expandablelayout.ExpandableLayout;
 
+import java.util.Arrays;
+
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialog;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialogController;
+import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
 import alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton;
 import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
@@ -45,6 +47,7 @@ import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.ButterKnife;
+import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
 
 /**
@@ -78,9 +81,12 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     private ColorStateList mDayToggleColors;
     private ColorStateList mVibrateColors;
     private RingtonePickerDialogController mRingtonePickerController;
-    private AlarmController mAlarmController;
+//    private AlarmController mAlarmController;
 
     private Alarm mAlarm;
+    private AlarmEditInterface mListener;
+
+//    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
 
     public EditAlarmFragment() {
     }
@@ -91,6 +97,22 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         args.putParcelable(ARG_SECTION_NUMBER, alarm);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof AlarmEditInterface) {
+            mListener = (AlarmEditInterface) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnListFragmentInteractionListener");
+        }
+    }
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
     }
 
     @Override
@@ -129,11 +151,12 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                                 .build();
                         oldAlarm.copyMutableFieldsTo(newAlarm);
                         persistUpdatedAlarm(newAlarm, false);
+                        bindRingtone();
                     }
                 }
         );
 
-        mAlarmController = new AlarmController(getActivity(), null);
+//        mAlarmController = new AlarmController(getActivity(), null);
     }
 
     @Override
@@ -142,8 +165,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         View rootView = inflater.inflate(R.layout.fragment_alarm_edit, container, false);
         ButterKnife.bind(this, rootView);
 
-
-
+        mSwitchOnOff.setChecked(mAlarm.isEnabled());
         bindDays(mAlarm);
         bindRingtone();
         setVibrate(mAlarm.vibrates());
@@ -177,8 +199,9 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     }
 
     final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
-        mAlarmController.scheduleAlarm(newAlarm, showSnackbar);
-        mAlarmController.save(newAlarm);
+        mListener.getAlarmController().scheduleAlarm(newAlarm, showSnackbar);
+        mListener.getAlarmController().save(newAlarm);
+        mAlarm = newAlarm;
     }
 
     @OnClick({ R.id.day0, R.id.day1, R.id.day2, R.id.day3, R.id.day4, R.id.day5, R.id.day6 })
@@ -192,6 +215,8 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         int weekDayAtPosition = DaysOfWeek.getInstance(getContext()).weekDayAt(position);
         Log.d(TAG, "Day toggle #" + position + " checked changed. This is weekday #"
                 + weekDayAtPosition + " relative to a week starting on Sunday");
+        Log.d(TAG, "onDayToggled: " + newAlarm);
+        Log.d(TAG, "onDayToggled: recurring days " + Arrays.toString(newAlarm.recurringDays()));
         newAlarm.setRecurring(weekDayAtPosition, view.isChecked());
         // ---------------------------------------------------------------------------------
         persistUpdatedAlarm(newAlarm, true);
@@ -204,6 +229,17 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         } else {
             mExpandableLayout.expand();
         }
+    }
+
+    @OnClick(R.id.ok)
+    void onBtnOkClicked(Button button) {
+        mListener.editFinished();
+    }
+
+    @OnClick(R.id.delete)
+    void onBtnDeleteClicked(Button button) {
+        mListener.onListItemDeleted(mAlarm);
+        mListener.editFinished();
     }
 
     @OnClick(R.id.ringtone)
@@ -222,6 +258,24 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 //        ((Activity) getContext()).startActivityForResult(intent, AlarmsFragment.REQUEST_PICK_RINGTONE);
 
         mRingtonePickerController.show(getSelectedRingtoneUri(), makeTag(R.id.ringtone));
+    }
+
+    @OnCheckedChanged(R.id.editor_switch)
+    void toggle(boolean checked) {
+        // http://stackoverflow.com/q/27641705/5055032
+        if (mSwitchOnOff.isPressed()) { // filters out automatic calls from VH binding
+            // don't need to toggle the switch state
+            Alarm alarm = getAlarm();
+            alarm.setEnabled(checked);
+            if (alarm.isEnabled()) {
+                // TODO: On 21+, upcoming notification doesn't post immediately
+                persistUpdatedAlarm(alarm, true);
+            } else {
+                mListener.getAlarmController().cancelAlarm(alarm, true, false);
+                // cancelAlarm() already calls save() for you.
+            }
+            mSwitchOnOff.setPressed(false); // clear the pressed focus, esp. if setPressed(true) was called manually
+        }
     }
 
     private void bindDays(Alarm alarm) {
@@ -298,11 +352,24 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         Point x = mMap.getProjection().toScreenLocation(visibleRegion.farRight);
         Point y = mMap.getProjection().toScreenLocation(visibleRegion.nearLeft);
 
+
+//        MapUtils.
         Point radiusPoint = x.x < y.y ? y : x;
 
         LatLng radius = mMap.getProjection().fromScreenLocation(new Point((radiusPoint.x / 2), (radiusPoint.y / 2)));
 
-        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(MapUtils.toRadiusMeters(mAlarm.coordinates(), radius)));
+        double radiusInMeters = MapUtils.toRadiusMeters(mAlarm.coordinates(), radius);
+
+        final Alarm oldAlarm = getAlarm();
+        Alarm newAlarm = oldAlarm.toBuilder()
+                .radius(radiusInMeters)
+                .build();
+        oldAlarm.copyMutableFieldsTo(newAlarm);
+        persistUpdatedAlarm(newAlarm, false);
+
+        Log.d(TAG, "drawMapCircle: " + radiusInMeters);
+
+        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(radiusInMeters));
         mMap.setOnCameraMoveStartedListener(EditAlarmFragment.this);
 
     }

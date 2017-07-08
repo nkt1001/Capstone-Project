@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import alarmiko.geoalarm.alarm.alarmiko.utils.LocalBroadcastHelper;
 
@@ -40,6 +41,7 @@ public abstract class DatabaseTableManager<T extends ObjectWithId> {
     }
 
     public int updateItem(long id, T newItem) {
+        Log.d("EditAlarmFragment", "updateItem: " + newItem);
         newItem.setId(id);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         int rowsUpdated = db.update(getTableName(),
