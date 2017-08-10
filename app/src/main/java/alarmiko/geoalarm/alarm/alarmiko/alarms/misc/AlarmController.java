@@ -73,7 +73,7 @@ public final class AlarmController {
             }
             // Show alarm in the status bar
             Intent alarmChanged = new Intent("android.intent.action.ALARM_CHANGED");
-            alarmChanged.putExtra("alarmSet", true/*enabled*/);
+            alarmChanged.putExtra("alarmSet", true);
             mAppContext.sendBroadcast(alarmChanged);
         }
 

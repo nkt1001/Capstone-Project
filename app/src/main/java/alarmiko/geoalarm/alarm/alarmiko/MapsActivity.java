@@ -3,9 +3,9 @@ package alarmiko.geoalarm.alarm.alarmiko;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
@@ -75,6 +75,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     private static final int ANIMATION_DURATION = 300;
 
+    private CurrentLocationService mCurrentLocationService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,6 +96,22 @@ public class MapsActivity extends AppCompatActivity implements
 
         getSupportLoaderManager().initLoader(ALARM_LOADER, null, this);
 
+        mCurrentLocationService = new CurrentLocationService(this, new CurrentLocationService.CurrentLocationServiceCallback() {
+            @Override
+            public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+                Log.d(TAG, "currentLocation() called with: location = [" + location + "], isConnected = [" + isConnected + "]");
+
+                if (!isConnected) {
+                    return;
+                }
+
+                if (location != null) {
+                    mMap.moveCamera(CameraUpdateFactory
+                            .newLatLngZoom(location, 17f));
+                    mCurrentLocationService.stopGettingLocation();
+                }
+            }
+        });
     }
 
     @Override
@@ -111,6 +129,12 @@ public class MapsActivity extends AppCompatActivity implements
         enableMyLocation();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mCurrentLocationService.stopGettingLocation();
+    }
+
     /**
      * Enables the My Location layer if the fine location permission has been granted.
      */
@@ -125,17 +149,7 @@ public class MapsActivity extends AppCompatActivity implements
             mMap.setMyLocationEnabled(true);
 
             mImvCenterMarker.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
-
-            new CurrentLocationService(this).getMyLocation(new CurrentLocationService.CurrentLocationServiceCallback() {
-                @Override
-                public void currentLocation(Location location) {
-                    if (location == null) {
-                        return;
-                    }
-                    mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 17f));
-                }
-            });
+            mCurrentLocationService.startGettingLocation();
         }
     }
 
@@ -196,8 +210,15 @@ public class MapsActivity extends AppCompatActivity implements
     public void okClick(View view) {
         Intent intent = new Intent(MapsActivity.this, AlarmEditActivity.class);
 
+        String address = mAddressView.getAddressString();
+        if (address.isEmpty()) {
+            address = getString(R.string.unknown_address);
+        }
+
         Alarm alarm = Alarm.builder()
-                .address(mAddressView.getAddressString())
+                .hour(-1)
+                .minutes(-1)
+                .address(address)
                 .coordinates(mMap.getCameraPosition().target)
                 .build();
         Log.d(TAG, "okClick: " + alarm);

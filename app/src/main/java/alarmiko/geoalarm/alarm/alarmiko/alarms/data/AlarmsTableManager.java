@@ -61,6 +61,7 @@ public class AlarmsTableManager extends DatabaseTableManager<Alarm> {
         values.put(AlarmsTable.COLUMN_VIBRATES, alarm.vibrates());
         values.put(AlarmsTable.COLUMN_ENABLED, alarm.isEnabled());
         values.put(AlarmsTable.COLUMN_RADIUS, alarm.radius());
+        values.put(AlarmsTable.COLUMN_ZOOM, alarm.zoom());
         values.put(AlarmsTable.COLUMN_LAT, alarm.coordinates().latitude);
         values.put(AlarmsTable.COLUMN_LNG, alarm.coordinates().longitude);
         values.put(AlarmsTable.COLUMN_ADDRESS, alarm.address());

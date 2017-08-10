@@ -11,14 +11,8 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 
 public class AlarmsCursorAdapter extends BaseCursorAdapter<Alarm, AlarmViewHolder, AlarmCursor> {
     private static final String TAG = "AlarmsCursorAdapter";
-//    private static final int VIEW_TYPE_COLLAPSED = 0;
-//    private static final int VIEW_TYPE_EXPANDED = 1;
 
     private final AlarmController mAlarmController;
-
-    // TOneverDO: initial value >= 0
-//    private int mExpandedPosition = RecyclerView.NO_POSITION;
-//    private long mExpandedId = RecyclerView.NO_ID;
 
     public AlarmsCursorAdapter(OnListItemInteractionListener<Alarm> listener,
                                AlarmController alarmController) {
@@ -28,8 +22,6 @@ public class AlarmsCursorAdapter extends BaseCursorAdapter<Alarm, AlarmViewHolde
 
     @Override
     protected AlarmViewHolder onCreateViewHolder(ViewGroup parent, OnListItemInteractionListener<Alarm> listener, int viewType) {
-//        if (viewType == VIEW_TYPE_COLLAPSED)
-//            return new CollapsedAlarmViewHolder(parent, listener, mAlarmController);
         return new AlarmViewHolder(parent, listener, mAlarmController);
     }
 

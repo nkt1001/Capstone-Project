@@ -29,6 +29,10 @@ public final class AlarmPreferences {
         return readPreference(c, R.string.key_first_day_of_week, 0 /* Sunday */);
     }
 
+    public static int dismissNowDistance(Context c) {
+        return readPreference(c, R.string.key_dismiss_now_distance, 350);
+    }
+
     public static int readPreference(Context c, @StringRes int key, int defaultValue) {
         String value = PreferenceManager.getDefaultSharedPreferences(c).getString(c.getString(key), null);
         return null == value ? defaultValue : Integer.parseInt(value);

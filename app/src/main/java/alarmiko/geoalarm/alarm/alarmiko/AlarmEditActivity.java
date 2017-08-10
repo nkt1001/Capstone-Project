@@ -1,25 +1,29 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AsyncAlarmsTableUpdateHandler;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.ScrollHandler;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.ui.AlarmsFragment;
-import alarmiko.geoalarm.alarm.alarmiko.dummy.DummyContent;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
+import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 
 public class AlarmEditActivity extends AppCompatActivity implements
-        AlarmListFragment.OnListFragmentInteractionListener,
-        AlarmEditInterface, ScrollHandler {
+        AlarmEditInterface, ScrollHandler, CurrentLocationService.CurrentLocationServiceCallback {
 
     private static final String TAG = "AlarmEditActivity";
 
@@ -28,11 +32,15 @@ public class AlarmEditActivity extends AppCompatActivity implements
 
     public static final String EXTRA_PICKED_ADDRESS = "alarm.alarmiko.AlarmEditActivity.EXTRA_PICKED_ADDRESS";
 
+    private final List<CurrentLocationService.CurrentLocationServiceCallback> mListeners = new ArrayList<>();
+
     private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
     private AlarmController mAlarmController;
     private View mSnackbarAnchor;
 
     private AlarmsFragment mAlarmsFragment;
+
+    private CurrentLocationService mLocationService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +49,6 @@ public class AlarmEditActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         String action = getIntent().getAction();
 
@@ -53,22 +59,17 @@ public class AlarmEditActivity extends AppCompatActivity implements
         mAsyncUpdateHandler = new AsyncAlarmsTableUpdateHandler(this,
                 mSnackbarAnchor, this, mAlarmController);
 
+        mLocationService = new CurrentLocationService(this, this);
+
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         if (action == null || ACTION_ALARM_LIST.equals(action)) {
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-            });
 
             transaction.add(R.id.fragment_container, mAlarmsFragment);
         } else {
-            fab.setVisibility(View.GONE);
+//            fab.setVisibility(View.GONE);
             Alarm alarm = getIntent().getParcelableExtra(EXTRA_PICKED_ADDRESS);
-            alarm.setEnabled(true);
+            alarm.setEnabled(false);
             mAsyncUpdateHandler.asyncInsert(alarm);
 
             Log.d("TAG", "onCreate: alarm = " + alarm);
@@ -80,8 +81,17 @@ public class AlarmEditActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
-        showAlarmEditFragment(null);
+    protected void onStart() {
+        super.onStart();
+
+        mLocationService.startGettingLocation();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        mLocationService.stopGettingLocation();
     }
 
     @Override
@@ -98,6 +108,14 @@ public class AlarmEditActivity extends AppCompatActivity implements
         Log.d(TAG, "onListItemClick() called with: item = [" + item + "], position = [" + position + "]");
 
         showAlarmEditFragment(item);
+    }
+
+    public void addOnLocationChangedListener(@NonNull CurrentLocationService.CurrentLocationServiceCallback callback) {
+        mListeners.add(callback);
+    }
+
+    public void removeOnLocationChangedListener(CurrentLocationService.CurrentLocationServiceCallback callback) {
+        mListeners.remove(callback);
     }
 
     private void showAlarmEditFragment(Alarm item) {
@@ -154,6 +172,15 @@ public class AlarmEditActivity extends AppCompatActivity implements
         Log.d(TAG, "scrollToPosition() called with: position = [" + position + "]");
         if (mAlarmsFragment.isAdded()) {
             mAlarmsFragment.scrollToPosition(position);
+        }
+    }
+
+    @Override
+    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+        if (mListeners.size() > 0) {
+            for (CurrentLocationService.CurrentLocationServiceCallback callback : mListeners) {
+                callback.currentLocation(location, isConnected);
+            }
         }
     }
 }

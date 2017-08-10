@@ -19,7 +19,6 @@ import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 
 public class UpcomingAlarmReceiver extends BroadcastReceiver {
     private static final String TAG = "UpcomingAlarmReceiver";
-    /*TOneverDO: not private*/
     private static final String ACTION_DISMISS_NOW = "action.DISMISS_NOW";
 
     public static final String ACTION_CANCEL_NOTIFICATION = "action.CANCEL_NOTIFICATION";

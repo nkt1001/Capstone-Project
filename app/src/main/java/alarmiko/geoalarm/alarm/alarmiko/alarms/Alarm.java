@@ -35,6 +35,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
     public abstract String ringtone();
     public abstract boolean vibrates();
     public abstract double radius();
+    public abstract double zoom();
     public abstract LatLng coordinates();
     public abstract String address();
 
@@ -63,6 +64,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
                 .label("")
                 .ringtone("")
                 .radius(0)
+                .zoom(0)
                 .coordinates(new LatLng(0, 0))
                 .address("")
                 .vibrates(false);
@@ -233,6 +235,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         dest.writeString(ringtone());
         dest.writeInt(vibrates() ? 1 : 0);
         dest.writeDouble(radius());
+        dest.writeDouble(zoom());
         dest.writeString(address());
         dest.writeParcelable(coordinates(), flags);
         // Mutable fields must be written after the immutable fields,
@@ -254,6 +257,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
                 .ringtone(in.readString())
                 .vibrates(in.readInt() != 0)
                 .radius(in.readDouble())
+                .zoom(in.readDouble())
                 .address(in.readString())
                 .coordinates((LatLng) in.readParcelable(LatLng.class.getClassLoader()))
                 .build();
@@ -288,6 +292,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         public abstract Builder ringtone(String ringtone);
         public abstract Builder vibrates(boolean vibrates);
         public abstract Builder radius(double radius);
+        public abstract Builder zoom(double zoom);
         public abstract Builder coordinates(LatLng coordinates);
         public abstract Builder address(String address);
         /* package */ abstract Alarm autoBuild();

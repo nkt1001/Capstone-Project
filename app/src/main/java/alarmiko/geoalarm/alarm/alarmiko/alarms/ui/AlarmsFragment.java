@@ -10,8 +10,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.philliphsu.bottomsheetpickers.time.BottomSheetTimePickerDialog;
 
+import java.util.concurrent.TimeUnit;
+
+import alarmiko.geoalarm.alarm.alarmiko.AlarmEditActivity;
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmCursor;
@@ -19,22 +23,25 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsListCursorLoader;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.RecyclerViewFragment;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.TimePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
+import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils.makeTag;
 
 
 public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder, AlarmCursor,
-        AlarmsCursorAdapter> implements BottomSheetTimePickerDialog.OnTimeSetListener {
+        AlarmsCursorAdapter> implements BottomSheetTimePickerDialog.OnTimeSetListener, CurrentLocationService.CurrentLocationServiceCallback {
     private static final String TAG = "AlarmsFragment";
 //    private static final String KEY_EXPANDED_POSITION = "expanded_position";
     public static final String EXTRA_SCROLL_TO_ALARM_ID = "alarms.extra.SCROLL_TO_ALARM_ID";
+    private static final long TIME_TO_UPDATE = TimeUnit.SECONDS.toMillis(15);
 
-//    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
+    //    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
 //    private AlarmController mAlarmController;
 //    private View mSnackbarAnchor;
     private TimePickerDialogController mTimePickerDialogController;
     private AlarmEditInterface mListener;
+    private long mLastTime;
 
 //    private int mExpandedPosition = RecyclerView.NO_POSITION;
 
@@ -90,15 +97,21 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop()");
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         Log.d(TAG, "onStart()");
+        if (getActivity() instanceof AlarmEditActivity) {
+            ((AlarmEditActivity)getActivity()).addOnLocationChangedListener(this);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop()");
+        if (getActivity() instanceof AlarmEditActivity) {
+            ((AlarmEditActivity)getActivity()).removeOnLocationChangedListener(this);
+        }
     }
 
     @Override
@@ -257,5 +270,19 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
 
     private static String makeTimePickerDialogTag() {
         return makeTag(AlarmsFragment.class, R.id.fab);
+    }
+
+    @Override
+    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+        if (mLastTime == 0) {
+            mLastTime = System.currentTimeMillis();
+            return;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if ((currentTime - mLastTime) > TIME_TO_UPDATE) {
+            mLastTime = currentTime;
+            getAdapter().notifyDataSetChanged();
+        }
     }
 }

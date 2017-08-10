@@ -18,6 +18,7 @@ public final class AlarmsTable {
     public static final String COLUMN_LAT = "latitude";
     public static final String COLUMN_LNG = "longitude";
     public static final String COLUMN_RADIUS = "radius";
+    public static final String COLUMN_ZOOM = "zoom";
     public static final String COLUMN_ADDRESS = "address";
     public static final String COLUMN_LABEL = "label";
     public static final String COLUMN_RINGTONE = "ringtone";
@@ -76,6 +77,7 @@ public final class AlarmsTable {
                 + COLUMN_LAT + " REAL DEFAULT 0, "
                 + COLUMN_LNG + " REAL DEFAULT 0, "
                 + COLUMN_RADIUS + " REAL, "
+                + COLUMN_ZOOM + " REAL, "
                 + COLUMN_ADDRESS + " TEXT, "
                 + COLUMN_SNOOZING_UNTIL_MILLIS + " INTEGER, "
                 + COLUMN_SUNDAY + " INTEGER NOT NULL DEFAULT 0, "

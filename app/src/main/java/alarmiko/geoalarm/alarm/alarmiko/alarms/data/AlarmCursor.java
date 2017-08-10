@@ -38,6 +38,7 @@ public class AlarmCursor extends BaseItemCursor<Alarm> {
                 .ringtone(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_RINGTONE)))
                 .label(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_LABEL)))
                 .radius(getDouble(getColumnIndexOrThrow(AlarmsTable.COLUMN_RADIUS)))
+                .zoom(getDouble(getColumnIndexOrThrow(AlarmsTable.COLUMN_ZOOM)))
                 .address(getString(getColumnIndexOrThrow(AlarmsTable.COLUMN_ADDRESS)))
                 .coordinates(new LatLng(
                         getDouble(getColumnIndexOrThrow(AlarmsTable.COLUMN_LAT)),

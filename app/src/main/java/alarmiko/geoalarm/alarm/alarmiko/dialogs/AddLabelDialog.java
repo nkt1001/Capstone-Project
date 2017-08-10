@@ -38,7 +38,7 @@ public class AddLabelDialog extends BaseAlertDialogFragment {
     protected AlertDialog createFrom(AlertDialog.Builder builder) {
         mEditText = new AppCompatEditText(getActivity());
         // Views must have IDs set to automatically save instance state
-        mEditText.setId(R.id.editor_alias);
+        mEditText.setId(R.id.tv_label);
         mEditText.setText(mInitialText);
         mEditText.setInputType(
                 EditorInfo.TYPE_CLASS_TEXT // Needed or else we won't get automatic spacing between words

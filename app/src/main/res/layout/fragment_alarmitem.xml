@@ -15,21 +15,22 @@
         android:layout_margin="@dimen/text_margin">
 
         <TextView
-            android:id="@+id/tv_alarm_item_alias"
+            android:id="@+id/tv_alarm_item_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="gguhoioi"
+            android:layout_marginBottom="8dp"
+
+            android:text="Label"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <TextView
-            android:id="@+id/tv_alarm_item_radius"
+            android:id="@+id/tv_alarm_item_street"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/tv_alarm_item_alias"
+            android:layout_below="@id/tv_alarm_item_label"
             android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            android:text="@string/radius"
+            android:text="@string/street"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@color/colorAccent" />
@@ -40,11 +41,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:text="nb87giub"
-            android:layout_below="@id/tv_alarm_item_radius"
+            android:layout_below="@id/tv_alarm_item_street"
             android:layout_toLeftOf="@+id/alarm_switch"
             android:layout_toStartOf="@+id/alarm_switch"
-            android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <android.support.v7.widget.SwitchCompat
@@ -52,8 +51,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/tv_alarm_item_info"
-            android:layout_alignEnd="@+id/tv_alarm_item_radius"
-            android:layout_alignRight="@+id/tv_alarm_item_radius"
+            android:layout_alignEnd="@+id/tv_alarm_item_street"
+            android:layout_alignRight="@+id/tv_alarm_item_street"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"/>
 
