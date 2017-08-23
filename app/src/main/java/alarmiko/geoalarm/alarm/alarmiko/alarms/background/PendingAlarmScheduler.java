@@ -42,6 +42,10 @@ public class PendingAlarmScheduler extends BroadcastReceiver {
                 if (!alarm.isEnabled()) {
                     throw new IllegalStateException("Alarm must be enabled!");
                 }
+                if (alarm.isGeo()) {
+                    return;
+                }
+
                 alarm.ignoreUpcomingRingTime(false); // allow #ringsWithinHours() to behave normally
                 // No UI work is done
                 AlarmController controller = new AlarmController(context, null);

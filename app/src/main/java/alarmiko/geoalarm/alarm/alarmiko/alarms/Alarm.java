@@ -2,6 +2,7 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.auto.value.AutoValue;
@@ -20,7 +21,7 @@ import static alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek.SUNDAY;
 
 @AutoValue
 public abstract class Alarm extends ObjectWithId implements Parcelable {
-    private static final int MAX_MINUTES_CAN_SNOOZE = 30;
+    private static final long MAX_MINUTES_CAN_SNOOZE = TimeUnit.HOURS.toMinutes(24);
 
     // =================== MUTABLE =======================
     private long snoozingUntilMillis;
@@ -76,6 +77,22 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         snoozingUntilMillis = System.currentTimeMillis() + minutes * 60000;
     }
 
+    private static final String TAG = "Alarm";
+    public void snoozeToNextDay() {
+
+        Calendar calendar = new GregorianCalendar();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        Log.d(TAG, "snoozeToNextDay: " + calendar.getTimeInMillis());
+
+        snoozingUntilMillis = calendar.getTimeInMillis() + TimeUnit.DAYS.toMillis(1);
+
+        Log.d(TAG, "snoozeToNextDay: " + snoozingUntilMillis);
+    }
+
     public long snoozingUntil() {
         return isSnoozed() ? snoozingUntilMillis : 0;
     }
@@ -88,9 +105,6 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         return true;
     }
 
-    /** <b>ONLY CALL THIS WHEN CREATING AN ALARM INSTANCE FROM A CURSOR</b> */
-    // TODO: To be even more safe, create a ctor that takes a Cursor and
-    // initialize the instance here instead of in AlarmDatabaseHelper.
     public void setSnoozing(long snoozingUntilMillis) {
         this.snoozingUntilMillis = snoozingUntilMillis;
     }
@@ -130,6 +144,10 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
         for (boolean b : recurringDays)
             if (b) count++;
         return count;
+    }
+
+    public boolean isGeo() {
+        return !(radius() == 0 && coordinates().latitude == 0 && coordinates().longitude == 0);
     }
 
     public void ignoreUpcomingRingTime(boolean ignore) {
@@ -182,7 +200,7 @@ public abstract class Alarm extends ObjectWithId implements Parcelable {
             // Not computed yet
             if (numDaysFromToday < 0) {
                 for (int i = Calendar.SUNDAY; i < weekdayToday; i++) {
-                    if (isRecurring(i - 1 /*match up with our day constant*/)) {
+                    if (isRecurring(i - 1)) {
                         numDaysFromToday = Calendar.SATURDAY - weekdayToday + i;
                         break;
                     }

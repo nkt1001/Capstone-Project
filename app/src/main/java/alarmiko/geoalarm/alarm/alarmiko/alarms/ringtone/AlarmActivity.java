@@ -97,7 +97,9 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
 
     @Override
     protected void onLeftButtonClick() {
-        mAlarmController.snoozeAlarm(getRingingObject());
+        if (!getRingingObject().isGeo()) {
+            mAlarmController.snoozeAlarm(getRingingObject());
+        }
         // Can't call dismiss() because we don't want to also call cancelAlarm()! Why? For example,
         // we don't want the alarm, if it has no recurrence, to be turned off right now.
         stopAndFinish();
@@ -106,7 +108,11 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
     @Override
     protected void onRightButtonClick() {
         // TODO do we really need to cancel the intent and alarm?
-        mAlarmController.cancelAlarm(getRingingObject(), false, true);
+        if (getRingingObject().isGeo()) {
+            mAlarmController.cancelGeo(getRingingObject(), false, false);
+        } else {
+            mAlarmController.cancelAlarm(getRingingObject(), false, true);
+        }
         stopAndFinish();
     }
 

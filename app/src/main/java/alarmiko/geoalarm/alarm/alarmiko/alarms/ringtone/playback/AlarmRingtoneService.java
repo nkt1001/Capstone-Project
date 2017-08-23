@@ -17,7 +17,6 @@ import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 
 public class AlarmRingtoneService extends RingtoneService<Alarm> {
     private static final String TAG = "AlarmRingtoneService";
-    /* TOneverDO: not private */
     private static final String ACTION_SNOOZE = "ringtone.action.SNOOZE";
     private static final String ACTION_DISMISS = "ringtone.action.DISMISS";
 
@@ -29,9 +28,15 @@ public class AlarmRingtoneService extends RingtoneService<Alarm> {
         // WHILE this Service has already been alive.
         if (intent.getAction() != null) {
             if (ACTION_SNOOZE.equals(intent.getAction())) {
-                mAlarmController.snoozeAlarm(getRingingObject());
+                if (!getRingingObject().isGeo()) {
+                    mAlarmController.snoozeAlarm(getRingingObject());
+                }
             } else if (ACTION_DISMISS.equals(intent.getAction())) {
-                mAlarmController.cancelAlarm(getRingingObject(), false, true); // TODO do we really need to cancel the intent and alarm?
+                if (getRingingObject().isGeo()) {
+                    mAlarmController.cancelGeo(getRingingObject(), false, false);
+                } else {
+                    mAlarmController.cancelAlarm(getRingingObject(), false, true); // TODO do we really need to cancel the intent and alarm?
+                }
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -51,7 +56,11 @@ public class AlarmRingtoneService extends RingtoneService<Alarm> {
     @Override
     protected void onAutoSilenced() {
         // TODO do we really need to cancel the alarm and intent?
-        mAlarmController.cancelAlarm(getRingingObject(), false, true);
+        if (getRingingObject().isGeo()) {
+            mAlarmController.cancelGeo(getRingingObject(), false, false);
+        } else {
+            mAlarmController.cancelAlarm(getRingingObject(), false, true);
+        }
     }
 
     @Override

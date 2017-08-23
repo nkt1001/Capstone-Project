@@ -27,6 +27,7 @@
     <string name="snooze">Snooze</string>
     <string name="done_snoozing">Done snoozing</string>
     <string name="alarm_set_for">Alarm set for %1$s from now.</string>
+    <string name="geo_alarm_set_for">Alarm set for %1$d %2$s from you.</string>
     <!-- ======================================================================================= -->
 
     <!-- ==================================== TOASTS ==================================== -->
@@ -68,6 +69,8 @@
     <string name="abbrev_less_than_one_minute">&lt;1m</string>
 
     <string name="upcoming_alarm_dismissed">%1$s alarm dismissed.</string>
+    <string name="upcoming_geo_alarm_dismissed">%f alarm dismissed.</string>
+
     <!-- ======================================================================================= -->
 
     <!-- ==================================== NOTIFICATIONS ==================================== -->
@@ -223,5 +226,6 @@
     <string name="street">Street</string>
     <string name="key_dismiss_now_distance">key_dismiss_now_distance</string>
     <string name="unknown_address">Unknown Address</string>
+    <string name="geofence_transition_invalid_type">Geofence transition invalid type %d</string>
 
 </resources>

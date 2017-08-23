@@ -10,8 +10,13 @@ import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
+import alarmiko.geoalarm.alarm.alarmiko.Alarmiko;
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.background.GeofenceTransitionsIntentService;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.background.PendingAlarmScheduler;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.background.UpcomingAlarmReceiver;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsTableManager;
@@ -20,7 +25,9 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.ringtone.playback.AlarmRingtoneSe
 import alarmiko.geoalarm.alarm.alarmiko.utils.ContentIntentUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DurationUtils;
+import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ParcelableUtil;
+import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
@@ -66,8 +73,6 @@ public final class AlarmController {
             AlarmManager.AlarmClockInfo info = new AlarmManager.AlarmClockInfo(ringAt, showIntent);
             am.setAlarmClock(info, alarmIntent);
         } else {
-            // WAKEUP alarm types wake the CPU up, but NOT the screen;
-            // you would handle that yourself by using a wakelock, etc..
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 am.setExact(AlarmManager.RTC_WAKEUP, ringAt, alarmIntent);
             }
@@ -110,7 +115,7 @@ public final class AlarmController {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 // Remove alarm in the status bar
                 Intent alarmChanged = new Intent("android.intent.action.ALARM_CHANGED");
-                alarmChanged.putExtra("alarmSet", false/*enabled*/);
+                alarmChanged.putExtra("alarmSet", false);
                 mAppContext.sendBroadcast(alarmChanged);
             }
         }
@@ -157,6 +162,74 @@ public final class AlarmController {
             } else {
                 scheduleAlarm(alarm, false);
             }
+        }
+
+        save(alarm);
+
+        // If service is not running, nothing happens
+        mAppContext.stopService(new Intent(mAppContext, AlarmRingtoneService.class));
+    }
+
+    public void scheduleGeo(ArrayList<Alarm> alarms) {
+        for (Alarm alarm : alarms) {
+            if (!alarm.isEnabled()) {
+                alarms.remove(alarm);
+            } else {
+                removeUpcomingAlarmNotification(alarm);
+            }
+        }
+
+        GeofenceTransitionsIntentService.scheduleGeoAlarm(mAppContext, alarms);
+    }
+
+    public void scheduleGeo(Alarm alarm, boolean showSnackbar) {
+        if (!alarm.isEnabled()) {
+            return;
+        }
+
+        removeUpcomingAlarmNotification(alarm);
+
+        if (showSnackbar) {
+            double distance = MapUtils.toRadiusMeters(Alarmiko.getCurrentLocation(), alarm.coordinates());
+            String message = mAppContext.getString(R.string.geo_alarm_set_for, Math.round(distance), "meters");
+            showSnackbar(message);
+        }
+
+        ArrayList<Alarm> alarmList = new ArrayList<>(Collections.singletonList(alarm));
+        GeofenceTransitionsIntentService.scheduleGeoAlarm(mAppContext, alarmList);
+    }
+
+    public void cancelGeo(Alarm alarm, boolean showSnackbar, boolean force) {
+        Log.d(TAG, "Cancelling alarm " + alarm);
+        AlarmManager am = (AlarmManager) mAppContext.getSystemService(Context.ALARM_SERVICE);
+
+        PendingIntent pi = notifyUpcomingAlarmIntent(alarm, true);
+        if (pi != null) {
+            am.cancel(pi);
+            pi.cancel();
+        }
+
+        removeUpcomingAlarmNotification(alarm);
+
+        if (alarm.isSnoozed()) {
+            alarm.stopSnoozing();
+        }
+
+        final int upcomingDistance = AlarmPreferences.dismissNowDistance(mAppContext);
+        boolean upcoming = Utils.isUpcoming(Alarmiko.getCurrentLocation(), alarm.coordinates(), alarm.radius(), upcomingDistance);
+        if (upcoming && showSnackbar) {
+            double distance = MapUtils.toRadiusMeters(Alarmiko.getCurrentLocation(), alarm.coordinates());
+            distance = Math.round(distance * 100) / 100;
+            String msg = mAppContext.getString(R.string.upcoming_geo_alarm_dismissed,
+                    distance);
+            showSnackbar(msg);
+        }
+
+        if (!alarm.hasRecurrence()) {
+            alarm.setEnabled(false);
+            GeofenceTransitionsIntentService.cancelGeoAlarm(mAppContext, new ArrayList<>(Collections.singletonList(alarm)));
+        } else if (alarm.isEnabled() && !force){
+            alarm.snoozeToNextDay();
         }
 
         save(alarm);

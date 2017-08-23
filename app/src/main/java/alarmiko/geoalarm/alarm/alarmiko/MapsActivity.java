@@ -216,8 +216,6 @@ public class MapsActivity extends AppCompatActivity implements
         }
 
         Alarm alarm = Alarm.builder()
-                .hour(-1)
-                .minutes(-1)
                 .address(address)
                 .coordinates(mMap.getCameraPosition().target)
                 .build();

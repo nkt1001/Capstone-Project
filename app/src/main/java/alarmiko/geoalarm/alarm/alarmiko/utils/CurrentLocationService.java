@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -45,6 +46,7 @@ public class CurrentLocationService implements GoogleApiClient.ConnectionCallbac
     }
 
     public void startGettingLocation() {
+        Log.d(TAG, "startGettingLocation: ");
         if (mGoogleServices.isConnected()) {
             requestLocationUpdates();
         } else {
@@ -73,8 +75,17 @@ public class CurrentLocationService implements GoogleApiClient.ConnectionCallbac
         }
     }
 
+    @Nullable
+    public GoogleApiClient getGoogleServices() {
+        if (mGoogleServices.isConnected()) {
+            return mGoogleServices;
+        }
+        return null;
+    }
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected: ");
         requestLocationUpdates();
     }
 
@@ -83,6 +94,7 @@ public class CurrentLocationService implements GoogleApiClient.ConnectionCallbac
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed: ");
         mCallback.currentLocation(null, false);
     }
 

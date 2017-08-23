@@ -18,7 +18,6 @@ public class Alarmiko extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
         Stetho.initializeWithDefaults(this);
         Fabric.with(this, new Answers(), new Crashlytics());
     }

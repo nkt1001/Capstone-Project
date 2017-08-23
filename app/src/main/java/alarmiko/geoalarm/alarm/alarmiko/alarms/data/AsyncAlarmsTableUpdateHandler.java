@@ -36,7 +36,11 @@ public final class AsyncAlarmsTableUpdateHandler extends AsyncDatabaseTableUpdat
 
     @Override
     protected void onPostAsyncDelete(Integer result, final Alarm alarm) {
-        mAlarmController.cancelAlarm(alarm, false, false);
+        if (alarm.isGeo()) {
+            mAlarmController.cancelGeo(alarm, false, true);
+        } else {
+            mAlarmController.cancelAlarm(alarm, false, false);
+        }
         if (mSnackbarAnchor != null) {
             // TODO: Consider adding delay to allow the alarm item animation
             // to finish first before we show the snackbar. Inbox app does this.
@@ -54,11 +58,19 @@ public final class AsyncAlarmsTableUpdateHandler extends AsyncDatabaseTableUpdat
 
     @Override
     protected void onPostAsyncInsert(Long result, Alarm alarm) {
-        mAlarmController.scheduleAlarm(alarm, true);
+        if (alarm.isGeo()) {
+            mAlarmController.scheduleGeo(alarm, true);
+        } else {
+            mAlarmController.scheduleAlarm(alarm, true);
+        }
     }
 
     @Override
     protected void onPostAsyncUpdate(Long result, Alarm alarm) {
-        mAlarmController.scheduleAlarm(alarm, true);
+        if (alarm.isGeo()) {
+            mAlarmController.scheduleGeo(alarm, true);
+        } else {
+            mAlarmController.scheduleAlarm(alarm, true);
+        }
     }
 }

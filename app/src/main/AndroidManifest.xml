@@ -10,9 +10,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".Alarmiko"
@@ -43,15 +43,11 @@
         <receiver
             android:name=".alarms.background.UpcomingAlarmReceiver"
             android:enabled="true"
-            android:exported="false">
-        </receiver>
-
+            android:exported="false" />
         <receiver
             android:name=".alarms.background.PendingAlarmScheduler"
             android:enabled="true"
-            android:exported="false">
-        </receiver>
-
+            android:exported="false" />
         <receiver
             android:name=".alarms.background.OnBootUpReceiver"
             android:enabled="true"
@@ -68,14 +64,11 @@
         <service
             android:name=".alarms.background.OnBootUpAlarmScheduler"
             android:enabled="true"
-            android:exported="false">
-        </service>
-
+            android:exported="false" />
         <service
             android:name=".alarms.ringtone.playback.AlarmRingtoneService"
             android:enabled="true"
-            android:exported="false">
-        </service>
+            android:exported="false" />
 
         <activity
             android:name=".MapsActivity"
@@ -96,9 +89,21 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="alarmiko.geoalarm.alarm.alarmiko.MapsActivity" />
         </activity>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="d05b7913042ca7ed61946e8a1ec27c3bb0a00dbd" />
+
+        <service android:name=".alarms.background.GeofenceTransitionsIntentService" />
+
+        <receiver
+            android:name=".alarms.background.FenceReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="alarmiko.geoalarm.alarm.alarmiko.alarms.background.action.FenceReceiver.ACTION_FENCE"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

@@ -80,7 +80,11 @@ public class UpcomingAlarmReceiver extends BroadcastReceiver {
         } else if (ACTION_CANCEL_NOTIFICATION.equals(intent.getAction())) {
             nm.cancel(TAG, (int) id);
         } else if (ACTION_DISMISS_NOW.equals(intent.getAction())) {
-            new AlarmController(context, null).cancelAlarm(alarm, false, true);
+            if (alarm.isGeo()) {
+                new AlarmController(context, null).cancelGeo(alarm, false, false);
+            } else {
+                new AlarmController(context, null).cancelAlarm(alarm, false, true);
+            }
         }
     }
 }

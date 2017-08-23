@@ -247,7 +247,12 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     }
 
     final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
-        mListener.getAlarmController().scheduleAlarm(newAlarm, showSnackbar);
+        if (newAlarm.isGeo()) {
+            mListener.getAlarmController().scheduleGeo(newAlarm, showSnackbar);
+        } else {
+            mListener.getAlarmController().scheduleAlarm(newAlarm, true);
+        }
+//        mListener.getAlarmController().scheduleAlarm(newAlarm, showSnackbar);
         mListener.getAlarmController().save(newAlarm);
         mAlarm = newAlarm;
     }
@@ -311,16 +316,18 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 
     @OnCheckedChanged(R.id.editor_switch)
     void toggle(boolean checked) {
-        if (true) {
-            return;
-        }
+
         if (mSwitchOnOff.isPressed()) {
             Alarm alarm = getAlarm();
             alarm.setEnabled(checked);
             if (alarm.isEnabled()) {
                 persistUpdatedAlarm(alarm, true);
             } else {
-                mListener.getAlarmController().cancelAlarm(alarm, true, false);
+                if (alarm.isGeo()) {
+                    mListener.getAlarmController().cancelGeo(alarm, true, true);
+                } else {
+                    mListener.getAlarmController().cancelAlarm(alarm, true, false);
+                }
             }
             mSwitchOnOff.setPressed(false);
         }

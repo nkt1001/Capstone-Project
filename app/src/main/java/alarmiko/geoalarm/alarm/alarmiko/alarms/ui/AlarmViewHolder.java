@@ -137,7 +137,11 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
             mSwitch.setPressed(true);
             bindSwitch(false);
         } else {
-            mAlarmController.cancelAlarm(alarm, true, true);
+            if (alarm.isGeo()) {
+                mAlarmController.cancelGeo(alarm, false, false);
+            } else {
+                mAlarmController.cancelAlarm(alarm, true, true);
+            }
         }
     }
 
@@ -151,9 +155,6 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
 
     @OnCheckedChanged(R.id.alarm_switch)
     void toggle(boolean checked) {
-        if (true) {
-            return;
-        }
 
         if (mSwitch.isPressed()) {
             Alarm alarm = getAlarm();
@@ -161,14 +162,22 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
             if (alarm.isEnabled()) {
                 persistUpdatedAlarm(alarm, true);
             } else {
-                mAlarmController.cancelAlarm(alarm, true, false);
+                if (alarm.isGeo()) {
+                    mAlarmController.cancelGeo(alarm, true, true);
+                } else {
+                    mAlarmController.cancelAlarm(alarm, true, false);
+                }
             }
             mSwitch.setPressed(false);
         }
     }
 
     final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
-        mAlarmController.scheduleAlarm(newAlarm, showSnackbar);
+        if (newAlarm.isGeo()) {
+            mAlarmController.scheduleGeo(newAlarm, showSnackbar);
+        } else {
+            mAlarmController.scheduleAlarm(newAlarm, showSnackbar);
+        }
         mAlarmController.save(newAlarm);
     }
 
