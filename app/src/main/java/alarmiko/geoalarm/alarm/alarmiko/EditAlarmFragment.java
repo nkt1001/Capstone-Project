@@ -177,7 +177,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                                 .label(label)
                                 .build();
                         oldAlarm.copyMutableFieldsTo(newAlarm);
-                        persistUpdatedAlarm(newAlarm, false);
+                        persistUpdatedAlarm(newAlarm, false, false);
                         bindLabel();
                     }
                 }
@@ -193,7 +193,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                                 .ringtone(ringtoneUri.toString())
                                 .build();
                         oldAlarm.copyMutableFieldsTo(newAlarm);
-                        persistUpdatedAlarm(newAlarm, false);
+                        persistUpdatedAlarm(newAlarm, false, false);
                         bindRingtone();
                     }
                 }
@@ -243,16 +243,17 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                 .vibrates(checked)
                 .build();
         oldAlarm.copyMutableFieldsTo(newAlarm);
-        persistUpdatedAlarm(newAlarm, false);
+        persistUpdatedAlarm(newAlarm, false, false);
     }
 
-    final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
-        if (newAlarm.isGeo()) {
-            mListener.getAlarmController().scheduleGeo(newAlarm, showSnackbar);
-        } else {
-            mListener.getAlarmController().scheduleAlarm(newAlarm, true);
+    final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar, boolean schedule) {
+        if (schedule) {
+            if (newAlarm.isGeo()) {
+                mListener.getAlarmController().scheduleGeo(newAlarm, showSnackbar);
+            } else {
+                mListener.getAlarmController().scheduleAlarm(newAlarm, true);
+            }
         }
-//        mListener.getAlarmController().scheduleAlarm(newAlarm, showSnackbar);
         mListener.getAlarmController().save(newAlarm);
         mAlarm = newAlarm;
     }
@@ -268,7 +269,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         int weekDayAtPosition = DaysOfWeek.getInstance(getContext()).weekDayAt(position);
         newAlarm.setRecurring(weekDayAtPosition, view.isChecked());
         // ---------------------------------------------------------------------------------
-        persistUpdatedAlarm(newAlarm, true);
+        persistUpdatedAlarm(newAlarm, true, false);
     }
 
     @OnClick(R.id.tv_editor_radius)
@@ -287,6 +288,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 
     @OnClick(R.id.ok)
     void onBtnOkClicked() {
+        persistUpdatedAlarm(mAlarm, false, true);
         mListener.editFinished();
     }
 
@@ -298,18 +300,6 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 
     @OnClick(R.id.ringtone)
     void showRingtonePickerDialog() {
-//        Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
-//        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-//                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-//                // The ringtone to show as selected when the dialog is opened
-//                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, getSelectedRingtoneUri())
-//                // Whether to show "Default" item in the list
-//                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, false);
-//        // The ringtone that plays when default option is selected
-//        //.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, DEFAULT_TONE);
-//        // TODO: This is VERY BAD. Use a Controller/Presenter instead.
-//        // The result will be delivered to MainActivity, and then delegated to AlarmsFragment.
-//        ((Activity) getContext()).startActivityForResult(intent, AlarmsFragment.REQUEST_PICK_RINGTONE);
 
         mRingtonePickerController.show(getSelectedRingtoneUri(), makeTag(R.id.ringtone));
     }
@@ -321,7 +311,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
             Alarm alarm = getAlarm();
             alarm.setEnabled(checked);
             if (alarm.isEnabled()) {
-                persistUpdatedAlarm(alarm, true);
+                persistUpdatedAlarm(alarm, true, true);
             } else {
                 if (alarm.isGeo()) {
                     mListener.getAlarmController().cancelGeo(alarm, true, true);
@@ -432,7 +422,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                 .zoom(zoom)
                 .build();
         oldAlarm.copyMutableFieldsTo(newAlarm);
-        persistUpdatedAlarm(newAlarm, false);
+        persistUpdatedAlarm(newAlarm, false, false);
 
         Log.d(TAG, "drawMapCircle: " + radiusInMeters);
 

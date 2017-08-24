@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -24,7 +23,6 @@ import com.google.android.gms.awareness.fence.TimeFence;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.ResultCallbacks;
 import com.google.android.gms.common.api.Status;
 
 import java.util.ArrayList;
@@ -32,9 +30,10 @@ import java.util.List;
 import java.util.TimeZone;
 
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
 
-public class GeofenceTransitionsIntentService extends IntentService implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
+public class GeofenceTransitionsIntentService extends IntentService {
     private static final String TAG = "GeofenceTransitionsInte";
 
     private static final String ACTION_SCHEDULE_ALARM = "alarmiko.geoalarm.alarm.alarmiko.alarms.background.action.SCHEDULE_ALARM";
@@ -44,7 +43,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
     private static final int CONNECT_ATTEMPTS = 3;
     private static final long TWENTY_FOUR_HOURS = 24L * 60L * 60L * 1000L;
 
-    private int mErrorConter;
+    private int mErrorCounter;
     private String mAction;
     private GoogleApiClient mGoogleApiClient;
     private ArrayList<Alarm> mAlarms;
@@ -72,7 +71,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             mAction = intent.getAction();
-            mErrorConter = 0;
+            mErrorCounter = 0;
             if (ACTION_SCHEDULE_ALARM.equals(mAction)) {
                 handleScheduleAlarm(intent);
             } else if (ACTION_CANCEL_ALARM.equals(mAction)) {
@@ -102,10 +101,17 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
     }
 
     private void connectGoogleClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext(), this, this)
+        mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
                 .addApi(Awareness.API)
                 .build();
-        mGoogleApiClient.connect();
+        ConnectionResult result = mGoogleApiClient.blockingConnect();
+        if (result.isSuccess()) {
+            onConnected();
+        } else if (++mErrorCounter <= CONNECT_ATTEMPTS) {
+            connectGoogleClient();
+        } else {
+            disconnectGoogleClient();
+        }
     }
 
     private void disconnectGoogleClient() {
@@ -114,6 +120,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
         }
     }
 
+    @Nullable
     private AwarenessFence getAwarenessFence(Alarm alarm) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return null;
@@ -166,41 +173,49 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
 
     protected void registerFence(final Alarm alarm, final AwarenessFence fence) {
 
-        Awareness.FenceApi.updateFences(
+        Status result = Awareness.FenceApi.updateFences(
                 mGoogleApiClient,
                 new FenceUpdateRequest.Builder()
                         .addFence(String.valueOf(alarm.getId()), fence, getFencePendingIntent())
                         .build())
-                .setResultCallback(new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(@NonNull Status status) {
-                        if(status.isSuccess()) {
-                            Log.i(TAG, "Fence was successfully registered.");
-                            queryFence(alarm);
-                        } else {
-                            Log.e(TAG, "Fence could not be registered: " + status);
-                        }
-                    }
-                });
+                .await();
+
+        if(result.isSuccess()) {
+            Log.i(TAG, "Fence was successfully registered.");
+            queryFence(alarm);
+        } else {
+            Log.e(TAG, "Fence could not be registered: " + result);
+            if (mAlarms.size() > 1) {
+                //this means that alarm was scheduled from bootup receiver
+                //simply setting alarm  disabled
+                alarm.setEnabled(false);
+                new AlarmController(getApplicationContext(), null).save(alarm);
+            } else {
+                //showing error screen
+                //try to define error and suggest to user way to resolve it
+                sendErrorBroadCast();
+            }
+        }
     }
 
-    protected void unregisterFence(final String fenceKey) {
-        Log.d(TAG, "unregisterFence() called with: fenceKey = [" + fenceKey + "]");
-        Awareness.FenceApi.updateFences(
+    private void sendErrorBroadCast() {
+
+    }
+
+    protected void unregisterFence(final Alarm alarm) {
+        Log.d(TAG, "unregisterFence() called with: fenceKey = [" + alarm.getId() + "]");
+        Status result = Awareness.FenceApi.updateFences(
                 mGoogleApiClient,
                 new FenceUpdateRequest.Builder()
-                        .removeFence(fenceKey)
-                        .build()).setResultCallback(new ResultCallbacks<Status>() {
-            @Override
-            public void onSuccess(@NonNull Status status) {
-                Log.i(TAG, "Fence " + fenceKey + " successfully removed.");
-            }
+                        .removeFence(String.valueOf(alarm.getId()))
+                        .build()).await();
 
-            @Override
-            public void onFailure(@NonNull Status status) {
-                Log.i(TAG, "Fence " + fenceKey + " could NOT be removed.");
-            }
-        });
+        if (!result.isSuccess()) {
+            Log.e(TAG, "unregisterFence: error");
+            alarm.setEnabled(false);
+            new AlarmController(getApplicationContext(), null).save(alarm);
+            sendErrorBroadCast();
+        }
     }
 
     private void queryFence(final Alarm alarm) {
@@ -234,9 +249,9 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
         return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onConnected() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
             disconnectGoogleClient();
             return;
         }
@@ -250,29 +265,15 @@ public class GeofenceTransitionsIntentService extends IntentService implements G
                 registerFence(alarm, fence);
             }
         } else if (ACTION_CANCEL_ALARM.equals(mAction)) {
-            Log.d(TAG, "onConnected: cancel");
             for (Alarm alarm : mAlarms) {
-                unregisterFence(String.valueOf(alarm.getId()));
+                unregisterFence(alarm);
             }
         }
-
-//        disconnectGoogleClient();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy: ");
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {}
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        if (++mErrorConter <= CONNECT_ATTEMPTS) {
-            connectGoogleClient();
-        } else {
-            disconnectGoogleClient();
-        }
+        disconnectGoogleClient();
     }
 }

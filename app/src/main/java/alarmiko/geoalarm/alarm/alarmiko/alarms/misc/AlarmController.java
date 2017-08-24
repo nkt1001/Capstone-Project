@@ -225,10 +225,10 @@ public final class AlarmController {
             showSnackbar(msg);
         }
 
-        if (!alarm.hasRecurrence()) {
+        if (!alarm.hasRecurrence() || force) {
             alarm.setEnabled(false);
             GeofenceTransitionsIntentService.cancelGeoAlarm(mAppContext, new ArrayList<>(Collections.singletonList(alarm)));
-        } else if (alarm.isEnabled() && !force){
+        } else if (alarm.isEnabled()){
             alarm.snoozeToNextDay();
         }
 
