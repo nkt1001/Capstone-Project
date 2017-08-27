@@ -10,7 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Status;
 import com.philliphsu.bottomsheetpickers.time.BottomSheetTimePickerDialog;
 
 import java.util.concurrent.TimeUnit;
@@ -23,14 +24,14 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsListCursorLoader;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.RecyclerViewFragment;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.TimePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
-import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils.makeTag;
 
 
 public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder, AlarmCursor,
-        AlarmsCursorAdapter> implements BottomSheetTimePickerDialog.OnTimeSetListener, CurrentLocationService.CurrentLocationServiceCallback {
+        AlarmsCursorAdapter> implements BottomSheetTimePickerDialog.OnTimeSetListener, ErrorReceiver.ErrorHandler {
     private static final String TAG = "AlarmsFragment";
 //    private static final String KEY_EXPANDED_POSITION = "expanded_position";
     public static final String EXTRA_SCROLL_TO_ALARM_ID = "alarms.extra.SCROLL_TO_ALARM_ID";
@@ -64,29 +65,15 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        if (savedInstanceState != null) {
-//            // Restore the value of the last expanded position here.
-//            // We cannot tell the adapter to expand this item until onLoadFinished()
-//            // is called.
-//            mExpandedPosition = savedInstanceState.getInt(KEY_EXPANDED_POSITION, RecyclerView.NO_POSITION);
-//        }
         mTimePickerDialogController = new TimePickerDialogController(
                 getFragmentManager(), getActivity(), this);
         mTimePickerDialogController.tryRestoreCallback(makeTimePickerDialogTag());
 
-//        long scrollToStableId = getActivity().getIntent().getLongExtra(EXTRA_SCROLL_TO_ALARM_ID, -1);
-//        if (scrollToStableId != -1) {
-//            setScrollToStableId(scrollToStableId);
-//        }
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-//        mSnackbarAnchor = getActivity().findViewById(R.id.main_content);
-//        mAlarmController = new AlarmController(getActivity(), mSnackbarAnchor);
-//        mAsyncUpdateHandler = new AsyncAlarmsTableUpdateHandler(getActivity(),
-//                mSnackbarAnchor, this, mAlarmController);
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -101,7 +88,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         super.onStart();
         Log.d(TAG, "onStart()");
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).addOnLocationChangedListener(this);
+            ((AlarmEditActivity)getActivity()).addErrorListener(this);
         }
     }
 
@@ -110,7 +97,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         super.onStop();
         Log.d(TAG, "onStop()");
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).removeOnLocationChangedListener(this);
+            ((AlarmEditActivity)getActivity()).removeErrorListener(this);
         }
     }
 
@@ -273,16 +260,23 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     }
 
     @Override
-    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
-        if (mLastTime == 0) {
-            mLastTime = System.currentTimeMillis();
-            return;
-        }
-
-        long currentTime = System.currentTimeMillis();
-        if ((currentTime - mLastTime) > TIME_TO_UPDATE) {
-            mLastTime = currentTime;
-            getAdapter().notifyDataSetChanged();
-        }
+    public void handleError(int errorCode, @Nullable Status status) {
+        refreshAdapter();
     }
+
+    private void refreshAdapter() {
+        getAdapter().notifyDataSetChanged();
+    }
+
+    @Override
+    public void criticalError(int errorCode, @Nullable Status status) {
+        refreshAdapter();
+    }
+
+    @Override
+    public void connectionError(int errorCode, @Nullable ConnectionResult status) {
+        refreshAdapter();
+    }
+
+
 }

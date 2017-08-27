@@ -1,6 +1,8 @@
 
 package alarmiko.geoalarm.alarm.alarmiko;
 
+import android.app.Activity;
+import android.content.IntentSender;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -11,18 +13,30 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.Status;
+
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
+import alarmiko.geoalarm.alarm.alarmiko.utils.LocalBroadcastHelper;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity implements ErrorReceiver.ErrorHandler {
+
+    private static final String TAG = "BaseActivity";
 
     @Nullable
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
     private Menu mMenu;
+
+    private ErrorReceiver mErrorReceiver;
 
     @LayoutRes
     protected abstract int layoutResId();
@@ -38,22 +52,49 @@ public abstract class BaseActivity extends AppCompatActivity {
         // When false, the system sets the default values only if this method has
         // never been called in the past (or the KEY_HAS_SET_DEFAULT_VALUES in the
         // default value shared preferences file is false).
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        // ========================================================================================
-        // TOneverDO: Set theme after setContentView()
-        // ========================================================================================
-        setContentView(layoutResId());
-        // Direct volume changes to the alarm stream
-        setVolumeControlStream(AudioManager.STREAM_ALARM);
-        ButterKnife.bind(this);
-        if (mToolbar != null) {
-            setSupportActionBar(mToolbar);
-            ActionBar ab = getSupportActionBar();
-            if (ab != null) {
-                ab.setDisplayHomeAsUpEnabled(isDisplayHomeUpEnabled());
-                ab.setDisplayShowTitleEnabled(isDisplayShowTitleEnabled());
+
+//        {
+            PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+            // ========================================================================================
+            // TOneverDO: Set theme after setContentView()
+            // ========================================================================================
+            setContentView(layoutResId());
+            // Direct volume changes to the alarm stream
+            setVolumeControlStream(AudioManager.STREAM_ALARM);
+            ButterKnife.bind(this);
+            if (mToolbar != null) {
+                setSupportActionBar(mToolbar);
+                ActionBar ab = getSupportActionBar();
+                if (ab != null) {
+                    ab.setDisplayHomeAsUpEnabled(isDisplayHomeUpEnabled());
+                    ab.setDisplayShowTitleEnabled(isDisplayShowTitleEnabled());
+                }
             }
-        }
+//        }
+
+        mErrorReceiver = new ErrorReceiver(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        LocalBroadcastHelper.registerReceiver(this, mErrorReceiver, ErrorReceiver.ACTION_ERROR_RECEIVED);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        checkGooglePlayServicesAvailable(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        LocalBroadcastHelper.unregisterReceiver(this, mErrorReceiver);
     }
 
     @Override
@@ -76,5 +117,87 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected boolean isDisplayShowTitleEnabled() {
         return false;
+    }
+
+    protected boolean checkGooglePlayServicesAvailable(Activity activity) {
+        Log.d(TAG, "checkGooglePlayServicesAvailable() called with: activity = [" + activity + "]");
+
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        int status = googleApiAvailability.isGooglePlayServicesAvailable(activity);
+        if(status != ConnectionResult.SUCCESS) {
+            if(googleApiAvailability.isUserResolvableError(status)) {
+                ErrorUtils.sendBroadcastError(activity, ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GOOGLE_SERVICES, null);
+            } else {
+                ErrorUtils.sendBroadcastError(activity, ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GOOGLE_SERVICES, null);
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void connectionError(int errorCode, ConnectionResult status) {
+        Log.d(TAG, "connectionError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+
+        if (ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_CONNECT_GOOGLE_SERVICES == errorCode) {
+            if (!isFinishing()) {
+                int statusCode = status == null ? -4 : status.getErrorCode();
+                String description = ErrorUtils
+                        .generateErrorDescription(BaseActivity.this, "Connecting to GOOGLE SERVICES", statusCode);
+                ErrorUtils.navigateToErrorActivity(BaseActivity.this, description);
+            }
+        } else if (ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_CONNECT_GOOGLE_SERVICES == errorCode && status.hasResolution()) {
+            try {
+                status.startResolutionForResult(BaseActivity.this, errorCode);
+            } catch (IntentSender.SendIntentException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void criticalError(int errorCode, Status status) {
+        Log.d(TAG, "criticalError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+
+        if (isFinishing()) {
+            return;
+        }
+
+        String description = null;
+        int statusCode = status == null ? -1 : status.getStatusCode();
+
+        switch (errorCode) {
+            case ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GOOGLE_SERVICES:
+                description = "Google Services are not available";
+                break;
+            case ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GEOFENCE_REGISTER:
+                description = ErrorUtils.generateErrorDescription(BaseActivity.this, "Registering GEO Alarm", statusCode);
+                break;
+            case ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_LOCATION_UPDATE:
+                description = ErrorUtils.generateErrorDescription(BaseActivity.this, "Registering Location Update", statusCode);
+                break;
+        }
+
+        if (description != null) {
+            ErrorUtils.navigateToErrorActivity(BaseActivity.this, description);
+        }
+    }
+
+    @Override
+    public void handleError(int errorCode, @Nullable Status status) {
+        Log.d(TAG, "handleError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+
+        if (status != null && status.hasResolution()) {
+            try {
+                status.startResolutionForResult(BaseActivity.this, errorCode);
+            } catch (IntentSender.SendIntentException e) {
+                e.printStackTrace();
+            }
+        } else if (errorCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GOOGLE_SERVICES) {
+            GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+            int statusCode = googleApiAvailability.isGooglePlayServicesAvailable(BaseActivity.this);
+            googleApiAvailability.getErrorDialog(BaseActivity.this, statusCode, errorCode);
+        }
     }
 }

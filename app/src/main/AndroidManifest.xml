@@ -101,9 +101,11 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="alarmiko.geoalarm.alarm.alarmiko.alarms.background.action.FenceReceiver.ACTION_FENCE"/>
+                <action android:name="alarmiko.geoalarm.alarm.alarmiko.alarms.background.action.FenceReceiver.ACTION_FENCE" />
             </intent-filter>
         </receiver>
+
+        <activity android:name=".ErrorActivity"></activity>
     </application>
 
 </manifest>

@@ -32,6 +32,8 @@ import java.util.TimeZone;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.ringtone.AlarmActivity;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
 
 public class GeofenceTransitionsIntentService extends IntentService {
     private static final String TAG = "GeofenceTransitionsInte";
@@ -42,6 +44,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private static final String EXTRA_ALARMS = "alarmiko.geoalarm.alarm.alarmiko.alarms.background.extra.ALARMS";
     private static final int CONNECT_ATTEMPTS = 3;
     private static final long TWENTY_FOUR_HOURS = 24L * 60L * 60L * 1000L;
+    private static final int ERROR_REGISTER_FENCE = 485;
+    private static final int ERROR_UNREGISTER_FENCE = 613;
+    private static final int ERROR_CONNECTING_TO_GOOGLE = 101;
 
     private int mErrorCounter;
     private String mAction;
@@ -66,6 +71,11 @@ public class GeofenceTransitionsIntentService extends IntentService {
         context.startService(intent);
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mAlarms = new ArrayList<>();
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -83,7 +93,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private void handleCancelAlarm(Intent intent) {
         mAlarms = intent.getParcelableArrayListExtra(EXTRA_ALARMS);
 
-        if (mAlarms.size() == 0) {
+        if (mAlarms == null || mAlarms.size() == 0) {
             return;
         }
 
@@ -93,7 +103,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private void handleScheduleAlarm(Intent intent) {
         mAlarms = intent.getParcelableArrayListExtra(EXTRA_ALARMS);
 
-        if (mAlarms.size() == 0) {
+        if (mAlarms == null || mAlarms.size() == 0) {
             return;
         }
 
@@ -110,6 +120,21 @@ public class GeofenceTransitionsIntentService extends IntentService {
         } else if (++mErrorCounter <= CONNECT_ATTEMPTS) {
             connectGoogleClient();
         } else {
+
+            if (mAlarms.size() > 0) {
+                AlarmController alarmController = new AlarmController(getApplicationContext(), null);
+                for (Alarm alarm : mAlarms) {
+                    alarm.setEnabled(false);
+                    alarmController.save(alarm);
+                    try {
+                        Thread.sleep(25);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            sendErrorBroadCast(ERROR_CONNECTING_TO_GOOGLE, result);
             disconnectGoogleClient();
         }
     }
@@ -176,7 +201,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
         Status result = Awareness.FenceApi.updateFences(
                 mGoogleApiClient,
                 new FenceUpdateRequest.Builder()
-                        .addFence(String.valueOf(alarm.getId()), fence, getFencePendingIntent())
+                        .addFence(String.valueOf(alarm.getId()), fence, getFencePendingIntent(alarm))
                         .build())
                 .await();
 
@@ -185,21 +210,44 @@ public class GeofenceTransitionsIntentService extends IntentService {
             queryFence(alarm);
         } else {
             Log.e(TAG, "Fence could not be registered: " + result);
-            if (mAlarms.size() > 1) {
-                //this means that alarm was scheduled from bootup receiver
-                //simply setting alarm  disabled
-                alarm.setEnabled(false);
-                new AlarmController(getApplicationContext(), null).save(alarm);
-            } else {
-                //showing error screen
-                //try to define error and suggest to user way to resolve it
-                sendErrorBroadCast();
+            alarm.setEnabled(false);
+            new AlarmController(getApplicationContext(), null).save(alarm);
+            if (mAlarms.size() == 1) {
+                sendErrorBroadCast(ERROR_REGISTER_FENCE, result);
             }
         }
     }
 
-    private void sendErrorBroadCast() {
+    private void sendErrorBroadCast(int errorCode, Status status) {
+        if (ERROR_REGISTER_FENCE == errorCode) {
+            if (status.hasResolution()) {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GEOFENCE_REGISTER, status);
+            } else {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GEOFENCE_REGISTER, status);
+            }
+        } else if (ERROR_UNREGISTER_FENCE == errorCode) {
+            if (status.hasResolution()) {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GEOFENCE_UNREGISTER, status);
+            } else {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GEOFENCE_UNREGISTER, status);
+            }
+        }
+    }
 
+    private void sendErrorBroadCast(int errorCode, ConnectionResult status) {
+        if (ERROR_CONNECTING_TO_GOOGLE == errorCode) {
+            if (status.hasResolution()) {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GEOFENCE_REGISTER, status);
+            } else {
+                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                        ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GEOFENCE_REGISTER, status);
+            }
+        }
     }
 
     protected void unregisterFence(final Alarm alarm) {
@@ -214,7 +262,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
             Log.e(TAG, "unregisterFence: error");
             alarm.setEnabled(false);
             new AlarmController(getApplicationContext(), null).save(alarm);
-            sendErrorBroadCast();
+            sendErrorBroadCast(ERROR_UNREGISTER_FENCE, result);
         }
     }
 
@@ -244,8 +292,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 });
     }
 
-    private PendingIntent getFencePendingIntent() {
+    private PendingIntent getFencePendingIntent(Alarm alarm) {
         Intent intent = new Intent(FenceReceiver.FENCE_ACTION);
+        intent.putExtra(AlarmActivity.EXTRA_RINGING_OBJECT, alarm);
         return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
     }
 

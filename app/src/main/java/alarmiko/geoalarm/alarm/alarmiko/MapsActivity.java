@@ -10,7 +10,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -20,6 +19,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -34,11 +34,11 @@ import com.google.android.gms.maps.model.LatLng;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AddressView;
 import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
 import butterknife.BindView;
-import butterknife.ButterKnife;
 
-public class MapsActivity extends AppCompatActivity implements
+public class MapsActivity extends BaseActivity implements
         GoogleMap.OnMyLocationButtonClickListener,
         OnMapReadyCallback,
         ActivityCompat.OnRequestPermissionsResultCallback,
@@ -50,9 +50,9 @@ public class MapsActivity extends AppCompatActivity implements
      *
      * @see #onRequestPermissionsResult(int, String[], int[])
      */
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 101;
-    private static final int ALARM_LOADER = 1001;
+    private static final int ALARM_LOADER = 102;
 
     /**
      * Flag indicating whether a requested permission has been denied after returning in
@@ -79,14 +79,15 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(R.layout.activity_maps);
+        super.onCreate(savedInstanceState);
 
-        ButterKnife.bind(this);
+//        setContentView(R.layout.activity_maps);
+
+//        ButterKnife.bind(this);
 
         mAddressView.addOnAddressLoadedListener(this);
 
@@ -186,6 +187,16 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    protected int layoutResId() {
+        return R.layout.activity_maps;
+    }
+
+    @Override
+    protected int menuResId() {
+        return 0;
+    }
+
     /**
      * Displays a dialog with error message explaining that the location permission is missing.
      */
@@ -243,6 +254,15 @@ public class MapsActivity extends AppCompatActivity implements
             } else if (resultCode == RESULT_CANCELED) {
                 // The user canceled the operation.
             }
+        } else if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_LOCATION_UPDATE){
+            if (resultCode == RESULT_OK) {
+                mCurrentLocationService.startLocationRequest();
+            }
+        } else if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_CONNECT_GOOGLE_SERVICES
+                || requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GOOGLE_SERVICES){
+            if (resultCode == RESULT_OK) {
+                showMenuButton();
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -293,5 +313,39 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
+    }
+
+    @Override
+    public void connectionError(int errorCode, ConnectionResult status) {
+        Log.d(TAG, "connectionError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+        super.connectionError(errorCode, status);
+        hideMenuButton();
+    }
+
+    private void hideMenuButton() {
+        if (mMenuButton != null) {
+            mMenuButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void showMenuButton() {
+        if (mMenuButton != null) {
+            mMenuButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void criticalError(int errorCode, Status status) {
+        Log.d(TAG, "criticalError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+        super.criticalError(errorCode, status);
+        hideMenuButton();
+    }
+
+    @Override
+    public void handleError(int errorCode, @Nullable Status status) {
+        Log.d(TAG, "handleError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
+
+        super.handleError(errorCode, status);
+        hideMenuButton();
     }
 }

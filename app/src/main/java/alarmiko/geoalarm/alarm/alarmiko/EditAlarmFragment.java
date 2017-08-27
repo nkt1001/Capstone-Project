@@ -11,7 +11,6 @@ import android.os.Vibrator;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.SwitchCompat;
@@ -23,6 +22,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,7 +36,6 @@ import com.google.android.gms.maps.model.VisibleRegion;
 import net.cachapa.expandablelayout.ExpandableLayout;
 
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmPreferences;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.AddLabelDialog;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.AddLabelDialogController;
@@ -43,25 +43,20 @@ import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialog;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
 import alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton;
-import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 import butterknife.BindView;
 import butterknife.BindViews;
-import butterknife.ButterKnife;
 import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
 
-import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
-/**
- * A placeholder fragment containing a simple view.
- */
-public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener,
-        GoogleMap.OnCameraMoveStartedListener, CurrentLocationService.CurrentLocationServiceCallback {
+public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener,
+        GoogleMap.OnCameraMoveStartedListener, ErrorReceiver.ErrorHandler {
 
     private static final String TAG = "EditAlarmFragment";
 
@@ -91,13 +86,11 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     private ColorStateList mDayToggleColors;
     private ColorStateList mVibrateColors;
     private RingtonePickerDialogController mRingtonePickerController;
-//    private AlarmController mAlarmController;
 
     private Alarm mAlarm;
     private AlarmEditInterface mListener;
     private AddLabelDialogController mAddLabelDialogController;
-
-//    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
+    private Drawable mCancelSnoozeDrawable;
 
     public EditAlarmFragment() {
     }
@@ -125,7 +118,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     public void onStart() {
         super.onStart();
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).addOnLocationChangedListener(this);
+            ((AlarmEditActivity)getActivity()).addErrorListener(this);
         }
     }
 
@@ -133,7 +126,7 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     public void onStop() {
         super.onStop();
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).removeOnLocationChangedListener(this);
+            ((AlarmEditActivity)getActivity()).removeErrorListener(this);
         }
     }
 
@@ -164,6 +157,8 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                 /*item 1*/Utils.getTextColorFromThemeAttr(getContext(), R.attr.colorAccent),
                 /*item 2*/Utils.getTextColorFromThemeAttr(getContext(), R.attr.themedIconTint)
         };
+
+        mCancelSnoozeDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_cancel_snooze);
 
         mDayToggleColors = new ColorStateList(states, dayToggleColors);
         mVibrateColors = new ColorStateList(states, vibrateColors);
@@ -198,8 +193,6 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
                     }
                 }
         );
-
-//        mAlarmController = new AlarmController(getActivity(), null);
     }
 
     private void bindLabel() {
@@ -209,17 +202,26 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_alarm_edit, container, false);
-        ButterKnife.bind(this, rootView);
+        View rootView = super.onCreateView(inflater, container, savedInstanceState);
 
-        mSwitchOnOff.setChecked(mAlarm.isEnabled());
+        bindSwitcher();
         bindDays(mAlarm);
         bindRingtone();
+        bindDismiss();
         setVibrate(mAlarm.vibrates());
         bindLabel();
         mTvStreet.setText(mAlarm.address());
 
         return rootView;
+    }
+
+    private void bindSwitcher() {
+        mSwitchOnOff.setChecked(mAlarm.isEnabled());
+    }
+
+    @Override
+    protected int contentLayout() {
+        return R.layout.fragment_alarm_edit;
     }
 
     @Override
@@ -278,6 +280,16 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
             mExpandableLayout.collapse();
         } else {
             mExpandableLayout.expand();
+        }
+    }
+
+    @OnClick(R.id.dismiss)
+    void dismiss() {
+        Alarm alarm = getAlarm();
+        if (alarm.isSnoozed()) {
+            alarm.stopSnoozing();
+            persistUpdatedAlarm(alarm, false, false);
+            setVisibility(mDismissButton, false);
         }
     }
 
@@ -345,6 +357,15 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
         String title = RingtoneManager.getRingtone(getContext(),
                 getSelectedRingtoneUri()).getTitle(getContext());
         mBtnRingtone.setText(title);
+    }
+
+    private void bindDismiss() {
+        boolean snoozed = mAlarm.isSnoozed();
+        boolean visible = mAlarm.isEnabled() && snoozed;
+        String buttonText = getContext().getString(R.string.cancel_snoozing);
+        setVisibility(mDismissButton, visible);
+        mDismissButton.setText(buttonText);
+        mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(mCancelSnoozeDrawable, null, null, null);
     }
 
     private void setVibrate(boolean vibrates) {
@@ -435,34 +456,31 @@ public class EditAlarmFragment extends Fragment implements OnMapReadyCallback, G
 
     @Override
     public void onCameraIdle() {
-        Log.d(TAG, "onCameraIdle: ");
         drawMapCircle();
     }
 
     @Override
     public void onCameraMoveStarted(int i) {
-        Log.d(TAG, "onCameraMoveStarted: ");
         mMap.setOnCameraIdleListener(EditAlarmFragment.this);
     }
 
     @Override
-    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+    public void handleError(int errorCode, @Nullable Status status) {
+        shutDownAlarm();
+    }
 
-        if (!isConnected || location == null) {
-            return;
-        }
+    @Override
+    public void criticalError(int errorCode, @Nullable Status status) {
+        shutDownAlarm();
+    }
 
-        final int upcomingDistance = AlarmPreferences.dismissNowDistance(getContext());
-        boolean upcoming = Utils.isUpcoming(Alarmiko.getCurrentLocation(), mAlarm.coordinates(), mAlarm.radius(), upcomingDistance);
-        boolean snoozed = mAlarm.isSnoozed();
-        boolean visible = mAlarm.isEnabled() && (upcoming || snoozed);
-        String buttonText = snoozed
-                ? getContext().getString(R.string.title_snoozing_until, formatTime(getContext(), mAlarm.snoozingUntil()))
-                : getContext().getString(R.string.dismiss_now);
-        setVisibility(mDismissButton, visible);
-        mDismissButton.setText(buttonText);
-        Drawable icon = upcoming ? ContextCompat.getDrawable(getContext(), R.drawable.ic_dismiss_alarm_24dp)
-                : ContextCompat.getDrawable(getContext(), R.drawable.ic_cancel_snooze);
-        mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, null, null, null);
+    @Override
+    public void connectionError(int errorCode, @Nullable ConnectionResult status) {
+        shutDownAlarm();
+    }
+
+    private void shutDownAlarm() {
+        mAlarm.setEnabled(false);
+        bindSwitcher();
     }
 }

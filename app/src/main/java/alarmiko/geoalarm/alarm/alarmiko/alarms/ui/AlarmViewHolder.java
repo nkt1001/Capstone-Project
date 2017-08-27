@@ -16,21 +16,17 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import alarmiko.geoalarm.alarm.alarmiko.Alarmiko;
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.BaseViewHolder;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.OnListItemInteractionListener;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmPreferences;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
-import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 import butterknife.BindView;
 import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
 import butterknife.OnTouch;
 
-import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
@@ -40,7 +36,7 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
 
     private final AlarmController mAlarmController;
 
-    private final Drawable mDismissNowDrawable;
+//    private final Drawable mDismissNowDrawable;
     private final Drawable mCancelSnoozeDrawable;
 
     final FragmentManager mFragmentManager;
@@ -62,7 +58,7 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
                            AlarmController controller) {
         super(parent, R.layout.fragment_alarmitem, listener);
         mAlarmController = controller;
-        mDismissNowDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_dismiss_alarm_24dp);
+//        mDismissNowDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_dismiss_alarm_24dp);
         mCancelSnoozeDrawable = ContextCompat.getDrawable(getContext(), R.drawable.ic_cancel_snooze);
 
         AppCompatActivity act = (AppCompatActivity) getContext();
@@ -133,15 +129,10 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
     @OnClick(R.id.dismiss)
     void dismiss() {
         Alarm alarm = getAlarm();
-        if (!alarm.hasRecurrence()) {
-            mSwitch.setPressed(true);
-            bindSwitch(false);
-        } else {
-            if (alarm.isGeo()) {
-                mAlarmController.cancelGeo(alarm, false, false);
-            } else {
-                mAlarmController.cancelAlarm(alarm, true, true);
-            }
+        if (alarm.isSnoozed()) {
+            alarm.stopSnoozing();
+            persistUpdatedAlarm(alarm, false);
+            setVisibility(mDismissButton, false);
         }
     }
 
@@ -186,18 +177,14 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
     }
 
     private void bindDismissButton(Alarm alarm) {
-        final int upcomingDistance = AlarmPreferences.dismissNowDistance(getContext());
-        boolean upcoming = Utils.isUpcoming(Alarmiko.getCurrentLocation(), alarm.coordinates(), alarm.radius(), upcomingDistance);
         boolean snoozed = alarm.isSnoozed();
-        boolean visible = alarm.isEnabled() && (upcoming || snoozed);
-        String buttonText = snoozed
-                ? getContext().getString(R.string.title_snoozing_until, formatTime(getContext(), alarm.snoozingUntil()))
-                : getContext().getString(R.string.dismiss_now);
+        boolean visible = alarm.isEnabled() && snoozed;
+        String buttonText = getContext().getString(R.string.cancel_snoozing);
         setVisibility(mDismissButton, visible);
         mDismissButton.setText(buttonText);
         // Set drawable start
-        Drawable icon = upcoming ? mDismissNowDrawable : mCancelSnoozeDrawable;
+//        Drawable icon = mCancelSnoozeDrawable;
 //        Utils.setTint(icon, mDismissButton.getCurrentTextColor());
-        mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, null, null, null);
+        mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(mCancelSnoozeDrawable, null, null, null);
     }
 }

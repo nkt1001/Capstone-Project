@@ -1,14 +1,15 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
@@ -21,8 +22,10 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.ui.AlarmsFragment;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
 import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
+import butterknife.BindView;
 
-public class AlarmEditActivity extends AppCompatActivity implements
+public class AlarmEditActivity extends BaseActivity implements
         AlarmEditInterface, ScrollHandler, CurrentLocationService.CurrentLocationServiceCallback {
 
     private static final String TAG = "AlarmEditActivity";
@@ -32,11 +35,16 @@ public class AlarmEditActivity extends AppCompatActivity implements
 
     public static final String EXTRA_PICKED_ADDRESS = "alarm.alarmiko.AlarmEditActivity.EXTRA_PICKED_ADDRESS";
 
-    private final List<CurrentLocationService.CurrentLocationServiceCallback> mListeners = new ArrayList<>();
+    private static final int ERROR_CONNECTION = 428;
+    private static final int CRITICAL_ERROR = 239;
+    private static final int HANDLABLE_ERROR = 180;
+
+    private final List<ErrorReceiver.ErrorHandler> mListeners = new ArrayList<>();
 
     private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
     private AlarmController mAlarmController;
-    private View mSnackbarAnchor;
+
+    @BindView(R.id.main_content) View mSnackbarAnchor;
 
     private AlarmsFragment mAlarmsFragment;
 
@@ -45,10 +53,10 @@ public class AlarmEditActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_alarm_edit);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+//        setContentView(R.layout.activity_alarm_edit);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
+//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         String action = getIntent().getAction();
 
@@ -104,17 +112,32 @@ public class AlarmEditActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected int layoutResId() {
+        return R.layout.activity_alarm_edit;
+    }
+
+    @Override
+    protected int menuResId() {
+        return 0;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
     public void onListItemClick(Alarm item, int position) {
         Log.d(TAG, "onListItemClick() called with: item = [" + item + "], position = [" + position + "]");
 
         showAlarmEditFragment(item);
     }
 
-    public void addOnLocationChangedListener(@NonNull CurrentLocationService.CurrentLocationServiceCallback callback) {
-        mListeners.add(callback);
+    public void addErrorListener(@NonNull ErrorReceiver.ErrorHandler listener) {
+        mListeners.add(listener);
     }
 
-    public void removeOnLocationChangedListener(CurrentLocationService.CurrentLocationServiceCallback callback) {
+    public void removeErrorListener(ErrorReceiver.ErrorHandler callback) {
         mListeners.remove(callback);
     }
 
@@ -128,7 +151,6 @@ public class AlarmEditActivity extends AppCompatActivity implements
     private void showAlarmListFragment() {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, mAlarmsFragment);
-//        transaction.addToBackStack(null);
         transaction.commit();
     }
 
@@ -177,10 +199,47 @@ public class AlarmEditActivity extends AppCompatActivity implements
 
     @Override
     public void currentLocation(@Nullable LatLng location, boolean isConnected) {
-        if (mListeners.size() > 0) {
-            for (CurrentLocationService.CurrentLocationServiceCallback callback : mListeners) {
-                callback.currentLocation(location, isConnected);
+//        if (mListeners.size() > 0) {
+//            for (CurrentLocationService.CurrentLocationServiceCallback callback : mListeners) {
+//                callback.currentLocation(location, isConnected);
+//            }
+//        }
+    }
+
+    private void fireEvent(int type, int errorCode, ConnectionResult result, Status status) {
+        for (ErrorReceiver.ErrorHandler listener : mListeners) {
+            switch (type) {
+                case ERROR_CONNECTION:
+                    listener.connectionError(errorCode, result);
+                    break;
+                case HANDLABLE_ERROR:
+                    listener.handleError(errorCode, status);
+                    break;
+                case CRITICAL_ERROR:
+                    listener.criticalError(errorCode, status);
+                    break;
             }
         }
+    }
+
+    @Override
+    public void connectionError(int errorCode, ConnectionResult status) {
+        super.connectionError(errorCode, status);
+
+        fireEvent(ERROR_CONNECTION, errorCode, status, null);
+    }
+
+    @Override
+    public void criticalError(int errorCode, Status status) {
+        super.criticalError(errorCode, status);
+
+        fireEvent(CRITICAL_ERROR, errorCode, null, status);
+    }
+
+    @Override
+    public void handleError(int errorCode, @Nullable Status status) {
+        super.handleError(errorCode, status);
+
+        fireEvent(HANDLABLE_ERROR, errorCode, null, status);
     }
 }

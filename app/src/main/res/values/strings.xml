@@ -24,6 +24,7 @@
     <string name="default_alarm_time_24h">00:00</string>
     <string name="title_snoozing_until">Snoozing until %1$s</string>
     <string name="dismiss">Dismiss</string>
+    <string name="cancel_snoozing">Cancel Snoozing</string>
     <string name="snooze">Snooze</string>
     <string name="done_snoozing">Done snoozing</string>
     <string name="alarm_set_for">Alarm set for %1$s from now.</string>
@@ -222,10 +223,11 @@
 
     <!-- https://android.googlesource.com/platform/frameworks/base/+/master/core/res/res/values/strings.xml -->
     <!-- The representation of a time duration when negative. An example is -1:14. This can be used with a countdown timer for example.-->
-    <string name="negative_duration">\u2212<xliff:g id="time" example="1:14">%1$s</xliff:g></string>
+    <string name="negative_duration">\u2212<xliff:g example="1:14" id="time">%1$s</xliff:g></string>
     <string name="street">Street</string>
     <string name="key_dismiss_now_distance">key_dismiss_now_distance</string>
     <string name="unknown_address">Unknown Address</string>
-    <string name="geofence_transition_invalid_type">Geofence transition invalid type %d</string>
+    <string name="exit">Exit</string>
+    <string name="error_template">Error occurred when: %1$s, ERROR_CODE: %2$d</string>
 
 </resources>

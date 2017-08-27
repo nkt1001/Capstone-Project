@@ -1,6 +1,7 @@
 package alarmiko.geoalarm.alarm.alarmiko.utils;
 
-import android.content.Context;
+import android.app.Activity;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -11,33 +12,36 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.model.LatLng;
 
 import alarmiko.geoalarm.alarm.alarmiko.Alarmiko;
-
-/**
- * Created by nkt01 on 19.03.2017.
- * Service that helping to get current user {@link Location location}.
- */
 
 public class CurrentLocationService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private static final String TAG = "CurrentLocationService";
 
-    private Context mContext;
+    public static final int RESOLUTION_REQUEST = 611;
+
+    private Activity mActivity;
     private GoogleApiClient mGoogleServices;
     private CurrentLocationServiceCallback mCallback;
     private LocationRequest mLocationRequest;
 
-    public CurrentLocationService(Context context, @NonNull CurrentLocationServiceCallback callback) {
+    public CurrentLocationService(Activity activity, @NonNull CurrentLocationServiceCallback callback) {
 
-        this.mContext = context;
+        this.mActivity = activity;
         mCallback = callback;
 
-        mGoogleServices = new GoogleApiClient.Builder(mContext, this, this)
+        mGoogleServices = new GoogleApiClient.Builder(mActivity, this, this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -69,9 +73,47 @@ public class CurrentLocationService implements GoogleApiClient.ConnectionCallbac
     }
 
     private void requestLocationUpdates() {
-        if (ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION)
+
+
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(mLocationRequest);
+            builder.setAlwaysShow(true);
+            PendingResult<LocationSettingsResult> result =
+                    LocationServices.SettingsApi.checkLocationSettings(mGoogleServices, builder.build());
+            result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+                @Override
+                public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                    final Status status = locationSettingsResult.getStatus();
+
+                    switch (status.getStatusCode()) {
+                        case LocationSettingsStatusCodes.SUCCESS:
+                            startLocationRequest();
+                            break;
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            ErrorUtils.sendBroadcastError(mActivity,
+                                    ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_LOCATION_UPDATE, status);
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            ErrorUtils.sendBroadcastError(mActivity, ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_LOCATION_UPDATE, status);
+                            break;
+                    }
+                }
+            });
+    }
+
+    private void startResolutionForResult(Status status) {
+        try {
+            status.startResolutionForResult(
+                    mActivity, RESOLUTION_REQUEST);
+        } catch (IntentSender.SendIntentException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void startLocationRequest() {
+        if (ContextCompat.checkSelfPermission(mActivity, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleServices, mLocationRequest, this, null);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleServices, mLocationRequest, CurrentLocationService.this, null);
         }
     }
 
