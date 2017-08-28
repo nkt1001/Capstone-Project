@@ -2,7 +2,6 @@ package alarmiko.geoalarm.alarm.alarmiko.alarms.background;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -20,7 +19,6 @@ public class OnBootUpAlarmScheduler extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d("BOOT!", "onHandleIntent: ");
         if (intent != null) {
             AlarmController controller = new AlarmController(this, null);
             // IntentService works in a background thread, so this won't hold us up.

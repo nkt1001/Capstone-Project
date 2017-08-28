@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
@@ -25,6 +26,7 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
         mAlarmController = new AlarmController(this, null);
         // TODO: If the upcoming alarm notification isn't present, verify other notifications aren't affected.
@@ -87,7 +89,8 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
     }
 
     @Override
-    protected int getRightButtonText() {return !getRingingObject().isGeo() || getRingingObject().hasRecurrence() ? R.string.dismiss : R.string.dismiss_today;
+    protected int getRightButtonText() {return (!getRingingObject().isGeo() || !getRingingObject().hasRecurrence())
+            ? R.string.dismiss : R.string.dismiss_today;
     }
 
     @Override

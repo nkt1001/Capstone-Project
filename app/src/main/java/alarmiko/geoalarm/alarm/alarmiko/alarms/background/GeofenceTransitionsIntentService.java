@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -22,7 +21,6 @@ import com.google.android.gms.awareness.fence.LocationFence;
 import com.google.android.gms.awareness.fence.TimeFence;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
 import java.util.ArrayList;
@@ -32,7 +30,6 @@ import java.util.TimeZone;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.DaysOfWeek;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.ringtone.AlarmActivity;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
 
 public class GeofenceTransitionsIntentService extends IntentService {
@@ -154,6 +151,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
         AwarenessFence basicFence = LocationFence.in(alarm.coordinates().latitude, alarm.coordinates().longitude, alarm.radius(), 0L);
 
         if (!alarm.hasRecurrence()) {
+            Log.d(TAG, "getAwarenessFence: return basic fence");
             return basicFence;
         } else {
             List<AwarenessFence> fences = new ArrayList<>();
@@ -192,6 +190,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 }
             }
 
+            Log.d(TAG, "getAwarenessFence: return fences " + fences.size());
             return AwarenessFence.and(fences);
         }
     }
@@ -269,33 +268,32 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private void queryFence(final Alarm alarm) {
         Log.d(TAG, "queryFence: " + alarm);
 
-        Awareness.FenceApi.queryFences(mGoogleApiClient,
+        FenceQueryResult fenceQueryResult = Awareness.FenceApi.queryFences(mGoogleApiClient,
                 FenceQueryRequest.forFences(String.valueOf(alarm.getId())))
-                .setResultCallback(new ResultCallback<FenceQueryResult>() {
-                    @Override
-                    public void onResult(@NonNull FenceQueryResult fenceQueryResult) {
-                        if (!fenceQueryResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "Could not query fence: " + alarm);
-                            return;
-                        }
-                        FenceStateMap map = fenceQueryResult.getFenceStateMap();
-                        for (String fenceKey : map.getFenceKeys()) {
-                            FenceState fenceState = map.getFenceState(fenceKey);
-                            Log.i(TAG, "Fence " + fenceKey + ": "
-                                    + fenceState.getCurrentState()
-                                    + ", was="
-                                    + fenceState.getPreviousState()
-                                    + ", lastUpdateTime="
-                                    +fenceState.getLastFenceUpdateTimeMillis());
-                        }
-                    }
-                });
+                .await();
+
+        Log.d(TAG, "queryFence: " + fenceQueryResult);
+
+        if (!fenceQueryResult.getStatus().isSuccess()) {
+            Log.e(TAG, "Could not query fence: " + alarm);
+            return;
+        }
+        FenceStateMap map = fenceQueryResult.getFenceStateMap();
+        for (String fenceKey : map.getFenceKeys()) {
+            FenceState fenceState = map.getFenceState(fenceKey);
+            Log.i(TAG, "Fence " + fenceKey + ": "
+                    + fenceState.getCurrentState()
+                    + ", was="
+                    + fenceState.getPreviousState()
+                    + ", lastUpdateTime="
+                    +fenceState.getLastFenceUpdateTimeMillis());
+        }
     }
 
     private PendingIntent getFencePendingIntent(Alarm alarm) {
         Intent intent = new Intent(FenceReceiver.FENCE_ACTION);
-        intent.putExtra(AlarmActivity.EXTRA_RINGING_OBJECT, alarm);
-        return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, 0);
+//        intent.putExtra(AlarmActivity.EXTRA_RINGING_OBJECT, alarm);
+        return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public void onConnected() {
