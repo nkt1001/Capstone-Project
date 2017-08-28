@@ -284,7 +284,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     }
 
     @OnClick(R.id.dismiss)
-    void dismiss() {
+    void onDismissClicked() {
         Alarm alarm = getAlarm();
         if (alarm.isSnoozed()) {
             alarm.stopSnoozing();

@@ -229,5 +229,7 @@
     <string name="unknown_address">Unknown Address</string>
     <string name="exit">Exit</string>
     <string name="error_template">Error occurred when: %1$s, ERROR_CODE: %2$d</string>
+    <string name="dismiss_today">Cancel for Today</string>
+    <string name="skip">Skip</string>
 
 </resources>

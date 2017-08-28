@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
@@ -66,8 +67,13 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
 
     @Override
     protected void getHeaderContent(ViewGroup parent) {
-        // TODO: Consider applying size span on the am/pm label
-        getLayoutInflater().inflate(R.layout.content_header_alarm_activity, parent, true);
+        if (getRingingObject().isGeo()) {
+            TextView addressView = (TextView) getLayoutInflater().inflate(R.layout.content_header_geo_alarm_activity, parent, false);
+            addressView.setText(getRingingObject().address());
+            parent.addView(addressView);
+        } else {
+            getLayoutInflater().inflate(R.layout.content_header_alarm_activity, parent, true);
+        }
     }
 
     @Override
@@ -77,12 +83,11 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
 
     @Override
     protected int getLeftButtonText() {
-        return R.string.snooze;
+        return !getRingingObject().isGeo() ? R.string.snooze : getRingingObject().hasRecurrence() ? R.string.skip : 0;
     }
 
     @Override
-    protected int getRightButtonText() {
-        return R.string.dismiss;
+    protected int getRightButtonText() {return !getRingingObject().isGeo() || getRingingObject().hasRecurrence() ? R.string.dismiss : R.string.dismiss_today;
     }
 
     @Override

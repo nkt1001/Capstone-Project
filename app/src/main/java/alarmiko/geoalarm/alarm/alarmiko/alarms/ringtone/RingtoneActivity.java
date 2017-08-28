@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -42,7 +43,9 @@ public abstract class RingtoneActivity<T extends Parcelable> extends BaseActivit
     @BindView(R.id.ok) Button mOkButton;
     @BindView(R.id.buttons_container) LinearLayout mButtonsContainer;
     @BindView(R.id.btn_text_left) TextView mLeftButton;
+    @BindView(R.id.btn_left) FrameLayout mLeftButtonConatiner;
     @BindView(R.id.btn_text_right) TextView mRightButton;
+    @BindView(R.id.btn_right) FrameLayout mRightButtonContainer;
 
     protected abstract Class<? extends RingtoneService> getRingtoneServiceClass();
 
@@ -110,10 +113,19 @@ public abstract class RingtoneActivity<T extends Parcelable> extends BaseActivit
         getHeaderContent((LinearLayout) findViewById(R.id.header));
         mAutoSilencedText.setCompoundDrawablesWithIntrinsicBounds(0, getAutoSilencedDrawable(), 0, 0);
         mAutoSilencedText.setText(getAutoSilencedText());
-        mLeftButton.setText(getLeftButtonText());
-        mRightButton.setText(getRightButtonText());
-        mLeftButton.setCompoundDrawablesWithIntrinsicBounds(0, getLeftButtonDrawable(), 0, 0);
-        mRightButton.setCompoundDrawablesWithIntrinsicBounds(0, getRightButtonDrawable(), 0, 0);
+        if (getLeftButtonText() == 0) {
+            mLeftButtonConatiner.setVisibility(View.GONE);
+        } else {
+            mLeftButton.setText(getLeftButtonText());
+            mLeftButton.setCompoundDrawablesWithIntrinsicBounds(0, getLeftButtonDrawable(), 0, 0);
+        }
+
+        if (getRightButtonText() == 0) {
+            mRightButtonContainer.setVisibility(View.GONE);
+        } else {
+            mRightButton.setText(getRightButtonText());
+            mRightButton.setCompoundDrawablesWithIntrinsicBounds(0, getRightButtonDrawable(), 0, 0);
+        }
 
         Intent intent = new Intent(this, getRingtoneServiceClass())
                 .putExtra(EXTRA_RINGING_OBJECT, ParcelableUtil.marshall(mRingingObject));

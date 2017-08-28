@@ -63,12 +63,12 @@
 
             <TextView
                 android:id="@+id/btn_text_left"
+                style="@style/TextAppearance.AppCompat.Medium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:gravity="center"
                 android:drawablePadding="8dp"
-                style="@style/TextAppearance.AppCompat.Medium"/>
+                android:gravity="center" />
 
         </FrameLayout>
 
