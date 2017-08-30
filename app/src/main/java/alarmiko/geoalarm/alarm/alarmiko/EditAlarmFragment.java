@@ -14,7 +14,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.SwitchCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,6 +42,7 @@ import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialog;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.RingtonePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
 import alarmiko.geoalarm.alarm.alarmiko.ui.TempCheckableImageButton;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ActivityEventAdapter;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 import alarmiko.geoalarm.alarm.alarmiko.utils.FragmentTagUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
@@ -92,6 +92,23 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     private AddLabelDialogController mAddLabelDialogController;
     private Drawable mCancelSnoozeDrawable;
 
+    private final ActivityEventAdapter mEventAdapter = new ActivityEventAdapter() {
+        @Override
+        public void handleError(int errorCode, @Nullable Status status) {
+            EditAlarmFragment.this.handleError(errorCode, status);
+        }
+
+        @Override
+        public void criticalError(int errorCode, @Nullable Status status) {
+            EditAlarmFragment.this.criticalError(errorCode, status);
+        }
+
+        @Override
+        public void connectionError(int errorCode, @Nullable ConnectionResult status) {
+            EditAlarmFragment.this.connectionError(errorCode, status);
+        }
+    };
+
     public EditAlarmFragment() {
     }
 
@@ -118,7 +135,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     public void onStart() {
         super.onStart();
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).addErrorListener(this);
+            ((AlarmEditActivity)getActivity()).addActivityEventListener(mEventAdapter);
         }
     }
 
@@ -126,7 +143,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     public void onStop() {
         super.onStop();
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).removeErrorListener(this);
+            ((AlarmEditActivity)getActivity()).removeActivityEventListener(mEventAdapter);
         }
     }
 
@@ -172,7 +189,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
                                 .label(label)
                                 .build();
                         oldAlarm.copyMutableFieldsTo(newAlarm);
-                        persistUpdatedAlarm(newAlarm, false, false);
+                        persistUpdatedAlarm(newAlarm, false);
                         bindLabel();
                     }
                 }
@@ -182,13 +199,13 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
                 new RingtonePickerDialog.OnRingtoneSelectedListener() {
                     @Override
                     public void onRingtoneSelected(Uri ringtoneUri) {
-                        Log.d(TAG, "Selected ringtone: " + ringtoneUri.toString());
+//                        Log.d(TAG, "Selected ringtone: " + ringtoneUri.toString());
                         final Alarm oldAlarm = getAlarm();
                         Alarm newAlarm = oldAlarm.toBuilder()
                                 .ringtone(ringtoneUri.toString())
                                 .build();
                         oldAlarm.copyMutableFieldsTo(newAlarm);
-                        persistUpdatedAlarm(newAlarm, false, false);
+                        persistUpdatedAlarm(newAlarm, false);
                         bindRingtone();
                     }
                 }
@@ -216,7 +233,9 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     }
 
     private void bindSwitcher() {
-        mSwitchOnOff.setChecked(mAlarm.isEnabled());
+        if (mSwitchOnOff != null) {
+            mSwitchOnOff.setChecked(mAlarm.isEnabled());
+        }
     }
 
     @Override
@@ -234,7 +253,6 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
 
     @OnClick(R.id.vibrate)
     void onVibrateToggled() {
-        Log.d(TAG, "onVibrateToggled: ");
         final boolean checked = mBtnVibrate.isChecked();
         if (checked) {
             Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -245,16 +263,14 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
                 .vibrates(checked)
                 .build();
         oldAlarm.copyMutableFieldsTo(newAlarm);
-        persistUpdatedAlarm(newAlarm, false, false);
+        persistUpdatedAlarm(newAlarm, false);
     }
 
-    final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar, boolean schedule) {
-        if (schedule) {
-            if (newAlarm.isGeo()) {
-                mListener.getAlarmController().scheduleGeo(newAlarm, showSnackbar);
-            } else {
-                mListener.getAlarmController().scheduleAlarm(newAlarm, true);
-            }
+    final void persistUpdatedAlarm(Alarm newAlarm, boolean showSnackbar) {
+        if (newAlarm.isGeo()) {
+            mListener.getAlarmController().scheduleGeo(newAlarm, showSnackbar);
+        } else {
+            mListener.getAlarmController().scheduleAlarm(newAlarm, true);
         }
         mListener.getAlarmController().save(newAlarm);
         mAlarm = newAlarm;
@@ -271,7 +287,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
         int weekDayAtPosition = DaysOfWeek.getInstance(getContext()).weekDayAt(position);
         newAlarm.setRecurring(weekDayAtPosition, view.isChecked());
         // ---------------------------------------------------------------------------------
-        persistUpdatedAlarm(newAlarm, true, false);
+        persistUpdatedAlarm(newAlarm, true);
     }
 
     @OnClick(R.id.tv_editor_radius)
@@ -288,7 +304,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
         Alarm alarm = getAlarm();
         if (alarm.isSnoozed()) {
             alarm.stopSnoozing();
-            persistUpdatedAlarm(alarm, false, false);
+            persistUpdatedAlarm(alarm, false);
             setVisibility(mDismissButton, false);
         }
     }
@@ -300,7 +316,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
 
     @OnClick(R.id.ok)
     void onBtnOkClicked() {
-        persistUpdatedAlarm(mAlarm, false, true);
+        persistUpdatedAlarm(mAlarm, false);
         mListener.editFinished();
     }
 
@@ -323,7 +339,7 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
             Alarm alarm = getAlarm();
             alarm.setEnabled(checked);
             if (alarm.isEnabled()) {
-                persistUpdatedAlarm(alarm, true, true);
+                persistUpdatedAlarm(alarm, true);
             } else {
                 if (alarm.isGeo()) {
                     mListener.getAlarmController().cancelGeo(alarm, true, true);
@@ -414,7 +430,6 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
 
     private void drawMapCircle() {
 
-        Log.d(TAG, "drawMapCircle: ");
         mMap.setOnCameraIdleListener(null);
         mMap.setOnCameraMoveStartedListener(null);
 
@@ -429,7 +444,6 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
         Point x = mMap.getProjection().toScreenLocation(visibleRegion.farRight);
         Point y = mMap.getProjection().toScreenLocation(visibleRegion.nearLeft);
 
-//        MapUtils.
         Point radiusPoint = x.x < y.y ? y : x;
 
         LatLng radius = mMap.getProjection().fromScreenLocation(new Point((radiusPoint.x / 2), (radiusPoint.y / 2)));
@@ -443,15 +457,16 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
                 .zoom(zoom)
                 .build();
         oldAlarm.copyMutableFieldsTo(newAlarm);
-        persistUpdatedAlarm(newAlarm, false, false);
+        persistUpdatedAlarm(newAlarm, false);
 
-        Log.d(TAG, "drawMapCircle: " + radiusInMeters);
+        CircleOptions options = new CircleOptions()
+                .center(mAlarm.coordinates())
+                .radius(radiusInMeters)
+                .strokeWidth(0)
+                .fillColor(ContextCompat.getColor(getContext(), R.color.circle_fill_color));
 
-        mMap.addCircle(new CircleOptions().center(mAlarm.coordinates()).radius(radiusInMeters));
+        mMap.addCircle(options);
         mMap.setOnCameraMoveStartedListener(EditAlarmFragment.this);
-
-        MarkerOptions markerOptions = new MarkerOptions().position(MapUtils.toRadiusLatLng(mAlarm.coordinates(), mAlarm.radius()));
-        mMap.addMarker(markerOptions);
     }
 
     @Override
@@ -480,7 +495,9 @@ public class EditAlarmFragment extends BaseFragment implements OnMapReadyCallbac
     }
 
     private void shutDownAlarm() {
-        mAlarm.setEnabled(false);
-        bindSwitcher();
+        if (mAlarm != null) {
+            mAlarm.setEnabled(false);
+            bindSwitcher();
+        }
     }
 }

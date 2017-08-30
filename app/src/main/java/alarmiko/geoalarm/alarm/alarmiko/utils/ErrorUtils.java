@@ -2,10 +2,13 @@ package alarmiko.geoalarm.alarm.alarmiko.utils;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Status;
+
+import alarmiko.geoalarm.alarm.alarmiko.ErrorActivity;
 import alarmiko.geoalarm.alarm.alarmiko.R;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils.ErrorData.EXTRA_ERROR_CODE;
@@ -41,14 +44,27 @@ public class ErrorUtils {
         int GOOGLE_CONNECTION_ERROR = CRITICAL_ERROR_CODE_CONNECT_GOOGLE_SERVICES + RESOLUTION_ERROR_CODE_CONNECT_GOOGLE_SERVICES;
     }
 
-    public static void sendBroadcastError(Context context, int errorCode, @Nullable Parcelable status) {
+    public static void sendBroadcastError(Context context, int errorCode, @Nullable Status status) {
         Log.d(TAG, "sendBroadcastError() called with: context = [" + context + "], errorCode = [" + errorCode + "], status = [" + status + "]");
 
         Intent intent = new Intent(ErrorReceiver.ACTION_ERROR_RECEIVED);
         intent.putExtra(EXTRA_ERROR_CODE, errorCode);
 
         if (status != null) {
-            intent.putExtra(EXTRA_ERROR_STATUS, ParcelableUtil.marshall(status));
+            intent.putExtra(EXTRA_ERROR_STATUS, status);
+        }
+
+        context.sendBroadcast(intent);
+    }
+
+    public static void sendBroadcastErrorConnetion(Context context, int errorCode, @Nullable ConnectionResult status) {
+        Log.d(TAG, "sendBroadcastError() called with: context = [" + context + "], errorCode = [" + errorCode + "], status = [" + status + "]");
+
+        Intent intent = new Intent(ErrorReceiver.ACTION_ERROR_RECEIVED);
+        intent.putExtra(EXTRA_ERROR_CODE, errorCode);
+
+        if (status != null) {
+            intent.putExtra(EXTRA_ERROR_STATUS, status);
         }
 
         context.sendBroadcast(intent);
@@ -59,6 +75,8 @@ public class ErrorUtils {
     }
 
     public static void navigateToErrorActivity(Context context, String description) {
-
+        Intent intent = new Intent(context, ErrorActivity.class);
+        intent.putExtra(ErrorActivity.EXTRA_DESCRIPTION, description);
+        context.startActivity(intent);
     }
 }

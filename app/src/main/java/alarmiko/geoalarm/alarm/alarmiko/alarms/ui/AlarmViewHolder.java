@@ -88,8 +88,10 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
         }
 
         StringBuilder stringBuilder = new StringBuilder();
-        if (days.size() == DaysOfWeek.NUM_DAYS || days.size() == 0) {
+        if (days.size() == DaysOfWeek.NUM_DAYS) {
             stringBuilder.append(getContext().getString(R.string.every_day));
+        } else if (days.size() == 0) {
+            stringBuilder.append(getContext().getString(R.string.once));
         } else {
             for (int i = 0; i < days.size(); i++) {
                 String s = days.get(i);
@@ -182,9 +184,6 @@ public class AlarmViewHolder extends BaseViewHolder<Alarm> {
         String buttonText = getContext().getString(R.string.cancel_snoozing);
         setVisibility(mDismissButton, visible);
         mDismissButton.setText(buttonText);
-        // Set drawable start
-//        Drawable icon = mCancelSnoozeDrawable;
-//        Utils.setTint(icon, mDismissButton.getCurrentTextColor());
         mDismissButton.setCompoundDrawablesRelativeWithIntrinsicBounds(mCancelSnoozeDrawable, null, null, null);
     }
 }

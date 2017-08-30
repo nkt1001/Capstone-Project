@@ -2,6 +2,7 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="map_button_margin">8dp</dimen>
     <dimen name="text_margin">16dp</dimen>
     <dimen name="vibrate_toggle_size">48dp</dimen>
     <dimen name="item_margin_between_elements">4dp</dimen>

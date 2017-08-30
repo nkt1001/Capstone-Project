@@ -5,12 +5,11 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +20,11 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.list.ScrollHandler;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.ui.AlarmsFragment;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
-import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
-import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ActivityEventAdapter;
 import butterknife.BindView;
 
 public class AlarmEditActivity extends BaseActivity implements
-        AlarmEditInterface, ScrollHandler, CurrentLocationService.CurrentLocationServiceCallback {
+        AlarmEditInterface, ScrollHandler {
 
     private static final String TAG = "AlarmEditActivity";
 
@@ -35,71 +33,55 @@ public class AlarmEditActivity extends BaseActivity implements
 
     public static final String EXTRA_PICKED_ADDRESS = "alarm.alarmiko.AlarmEditActivity.EXTRA_PICKED_ADDRESS";
 
-    private static final int ERROR_CONNECTION = 428;
-    private static final int CRITICAL_ERROR = 239;
-    private static final int HANDLABLE_ERROR = 180;
+    private static final int EVENT_ERROR_CONNECTION = 428;
+    private static final int EVENT_CRITICAL_ERROR = 239;
+    private static final int EVENT_HANDLABLE_ERROR = 180;
+    private static final int EVENT_SCROLL_TO_POSITION = 830;
+    private static final int EVENT_SCROLL_TO_STABLE_ID = 980;
 
-    private final List<ErrorReceiver.ErrorHandler> mListeners = new ArrayList<>();
+    private final List<ActivityEventAdapter> mListeners = new ArrayList<>();
 
     private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
     private AlarmController mAlarmController;
 
     @BindView(R.id.main_content) View mSnackbarAnchor;
 
-    private AlarmsFragment mAlarmsFragment;
-
-    private CurrentLocationService mLocationService;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_alarm_edit);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        if (mToolbar != null) {
+            mToolbar.setTitle(R.string.title_activity_alarm);
+        }
         String action = getIntent().getAction();
-
-        mAlarmsFragment = new AlarmsFragment();
 
         mSnackbarAnchor = findViewById(R.id.main_content);
         mAlarmController = new AlarmController(this, mSnackbarAnchor);
         mAsyncUpdateHandler = new AsyncAlarmsTableUpdateHandler(this,
                 mSnackbarAnchor, this, mAlarmController);
 
-        mLocationService = new CurrentLocationService(this, this);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         if (action == null || ACTION_ALARM_LIST.equals(action)) {
-
-            transaction.add(R.id.fragment_container, mAlarmsFragment);
+            transaction.replace(R.id.fragment_container, new AlarmsFragment());
         } else {
-//            fab.setVisibility(View.GONE);
             Alarm alarm = getIntent().getParcelableExtra(EXTRA_PICKED_ADDRESS);
-            alarm.setEnabled(false);
             mAsyncUpdateHandler.asyncInsert(alarm);
-
-            Log.d("TAG", "onCreate: alarm = " + alarm);
-
-            transaction.add(R.id.fragment_container, EditAlarmFragment.newInstance(alarm));
+            transaction.replace(R.id.fragment_container, EditAlarmFragment.newInstance(alarm));
         }
 
         transaction.commit();
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    public boolean onOptionsItemSelected(MenuItem item) {
 
-        mLocationService.startGettingLocation();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        mLocationService.stopGettingLocation();
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -128,16 +110,14 @@ public class AlarmEditActivity extends BaseActivity implements
 
     @Override
     public void onListItemClick(Alarm item, int position) {
-        Log.d(TAG, "onListItemClick() called with: item = [" + item + "], position = [" + position + "]");
-
         showAlarmEditFragment(item);
     }
 
-    public void addErrorListener(@NonNull ErrorReceiver.ErrorHandler listener) {
+    public void addActivityEventListener(@NonNull ActivityEventAdapter listener) {
         mListeners.add(listener);
     }
 
-    public void removeErrorListener(ErrorReceiver.ErrorHandler callback) {
+    public void removeActivityEventListener(ActivityEventAdapter callback) {
         mListeners.remove(callback);
     }
 
@@ -149,20 +129,22 @@ public class AlarmEditActivity extends BaseActivity implements
     }
 
     private void showAlarmListFragment() {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, mAlarmsFragment);
-        transaction.commit();
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+        } else {
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, new AlarmsFragment());
+            transaction.commit();
+        }
     }
 
     @Override
     public void onListItemDeleted(Alarm item) {
-        Log.d(TAG, "onListItemDeleted() called with: item = [" + item + "]");
         mAsyncUpdateHandler.asyncDelete(item);
     }
 
     @Override
     public void onListItemUpdate(Alarm item, int position) {
-        Log.d(TAG, "onListItemUpdate() called with: item = [" + item + "], position = [" + position + "]");
         mAsyncUpdateHandler.asyncUpdate(item.getId(), item);
     }
 
@@ -182,41 +164,37 @@ public class AlarmEditActivity extends BaseActivity implements
     }
 
     @Override
+    public void onAddNewAlarmCLicked() {
+        finish();
+    }
+
+    @Override
     public void setScrollToStableId(long id) {
-        Log.d(TAG, "setScrollToStableId() called with: id = [" + id + "]");
-        if (mAlarmsFragment.isAdded()) {
-            mAlarmsFragment.setScrollToStableId(id);
-        }
+        fireEvent(EVENT_SCROLL_TO_STABLE_ID, 0, null, null, 0, id);
     }
 
     @Override
     public void scrollToPosition(int position) {
-        Log.d(TAG, "scrollToPosition() called with: position = [" + position + "]");
-        if (mAlarmsFragment.isAdded()) {
-            mAlarmsFragment.scrollToPosition(position);
-        }
+        fireEvent(EVENT_SCROLL_TO_STABLE_ID, 0, null, null, position, 0);
     }
 
-    @Override
-    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
-//        if (mListeners.size() > 0) {
-//            for (CurrentLocationService.CurrentLocationServiceCallback callback : mListeners) {
-//                callback.currentLocation(location, isConnected);
-//            }
-//        }
-    }
-
-    private void fireEvent(int type, int errorCode, ConnectionResult result, Status status) {
-        for (ErrorReceiver.ErrorHandler listener : mListeners) {
+    private void fireEvent(int type, int errorCode, ConnectionResult result, Status status, int position, long stableId) {
+        for (ActivityEventAdapter listener : mListeners) {
             switch (type) {
-                case ERROR_CONNECTION:
+                case EVENT_ERROR_CONNECTION:
                     listener.connectionError(errorCode, result);
                     break;
-                case HANDLABLE_ERROR:
+                case EVENT_HANDLABLE_ERROR:
                     listener.handleError(errorCode, status);
                     break;
-                case CRITICAL_ERROR:
+                case EVENT_CRITICAL_ERROR:
                     listener.criticalError(errorCode, status);
+                    break;
+                case EVENT_SCROLL_TO_POSITION:
+                    listener.scrollToPosition(position);
+                    break;
+                case EVENT_SCROLL_TO_STABLE_ID:
+                    listener.setScrollToStableId(stableId);
                     break;
             }
         }
@@ -226,20 +204,20 @@ public class AlarmEditActivity extends BaseActivity implements
     public void connectionError(int errorCode, ConnectionResult status) {
         super.connectionError(errorCode, status);
 
-        fireEvent(ERROR_CONNECTION, errorCode, status, null);
+        fireEvent(EVENT_ERROR_CONNECTION, errorCode, status, null, 0, 0);
     }
 
     @Override
     public void criticalError(int errorCode, Status status) {
         super.criticalError(errorCode, status);
 
-        fireEvent(CRITICAL_ERROR, errorCode, null, status);
+        fireEvent(EVENT_CRITICAL_ERROR, errorCode, null, status, 0, 0);
     }
 
     @Override
     public void handleError(int errorCode, @Nullable Status status) {
         super.handleError(errorCode, status);
 
-        fireEvent(HANDLABLE_ERROR, errorCode, null, status);
+        fireEvent(EVENT_HANDLABLE_ERROR, errorCode, null, status, 0, 0);
     }
 }

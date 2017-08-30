@@ -6,7 +6,6 @@ import android.location.Geocoder;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -146,7 +145,7 @@ public class AddressView extends FrameLayout {
 
         @Override
         public void run() {
-            String address = null;
+            String address = "";
 
             try {
                 List<Address> addresses = mmGeoCoder.getFromLocation(mmLatLng.latitude, mmLatLng.longitude, 1);
@@ -157,7 +156,6 @@ public class AddressView extends FrameLayout {
                 }
 
             } catch (IOException e) {
-                Log.d("AddressView", "run: catched");
                 e.printStackTrace();
             } finally {
                 mHandler.obtainMessage(MESSAGE_HANDLER, hashCode(), 0, address).sendToTarget();

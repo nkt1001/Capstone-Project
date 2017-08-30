@@ -1,8 +1,14 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
+import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Paint;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,9 +23,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.Status;
@@ -31,15 +35,18 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.List;
+
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
+import alarmiko.geoalarm.alarm.alarmiko.alarms.background.OnBootUpAlarmScheduler;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AddressView;
-import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.PermissionUtils;
 import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MapsActivity extends BaseActivity implements
-        GoogleMap.OnMyLocationButtonClickListener,
         OnMapReadyCallback,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleMap.OnCameraMoveStartedListener,
@@ -64,18 +71,25 @@ public class MapsActivity extends BaseActivity implements
 
     private static final String TAG = "MapsActivity";
 
-    @BindView(R.id.imv_center_marker) ImageView mImvCenterMarker;
+    @BindView(R.id.imv_center_marker)
+    ImageView mImvCenterMarker;
 
-    @BindView(R.id.btn_find_address) Button mBtnChangeAddress;
-    @BindView(R.id.btn_ok_address) Button mBtnOkAddress;
+    @BindView(R.id.btn_find_address)
+    Button mBtnChangeAddress;
+    @BindView(R.id.btn_ok_address)
+    Button mBtnOkAddress;
 
-    @BindView(R.id.address_view) AddressView mAddressView;
+    @BindView(R.id.address_view)
+    AddressView mAddressView;
 
-    @BindView(R.id.imb_menu) ImageButton mMenuButton;
+    @BindView(R.id.imb_menu)
+    ImageButton mMenuButton;
+    @BindView(R.id.imb_location)
+    ImageButton mLocationButton;
+
+    private LatLng mLastKnownLocation;
 
     private static final int ANIMATION_DURATION = 300;
-
-    private CurrentLocationService mCurrentLocationService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,34 +99,49 @@ public class MapsActivity extends BaseActivity implements
 
         super.onCreate(savedInstanceState);
 
-//        setContentView(R.layout.activity_maps);
+        ButterKnife.bind(this);
 
-//        ButterKnife.bind(this);
+        refreshTimers();
 
+        mBtnOkAddress.setPaintFlags(mBtnOkAddress.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        mBtnChangeAddress.setPaintFlags(mBtnChangeAddress.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         mAddressView.addOnAddressLoadedListener(this);
+
+        mLastKnownLocation = null;
 
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         getSupportLoaderManager().initLoader(ALARM_LOADER, null, this);
+    }
 
-        mCurrentLocationService = new CurrentLocationService(this, new CurrentLocationService.CurrentLocationServiceCallback() {
-            @Override
-            public void currentLocation(@Nullable LatLng location, boolean isConnected) {
-                Log.d(TAG, "currentLocation() called with: location = [" + location + "], isConnected = [" + isConnected + "]");
+    private void refreshTimers() {
+        Intent intent = new Intent(this, OnBootUpAlarmScheduler.class);
+        startService(intent);
+    }
 
-                if (!isConnected) {
-                    return;
-                }
+    private void moveCamera(@Nullable LatLng latLng, float zoom) {
+        if (latLng != null && mMap != null) {
+            mMap.moveCamera(CameraUpdateFactory
+                    .newLatLngZoom(latLng, zoom));
+        }
+    }
 
-                if (location != null) {
-                    mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(location, 17f));
-                    mCurrentLocationService.stopGettingLocation();
-                }
-            }
-        });
+    private void animateCamera(@Nullable LatLng location) {
+        if (location != null && mMap != null) {
+            mMap.animateCamera(CameraUpdateFactory
+                    .newLatLng(location));
+        }
+    }
+
+    @Override
+    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+        if (mLastKnownLocation == null && mMap != null) {
+            moveCamera(location, 17f);
+        } else if (mMap == null) {
+            mLastKnownLocation = location;
+        }
     }
 
     @Override
@@ -125,15 +154,49 @@ public class MapsActivity extends BaseActivity implements
         mMap.getUiSettings().setCompassEnabled(false);
         mMap.getUiSettings().setRotateGesturesEnabled(false);
         mMap.getUiSettings().setTiltGesturesEnabled(false);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
 
-        mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mCurrentLocationService.stopGettingLocation();
+    private LatLng getLastKnownLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+
+        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = locationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            Location l = locationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
+        }
+
+        if (bestLocation == null) {
+            return null;
+        }
+        LatLng result = new LatLng(bestLocation.getLatitude(), bestLocation.getLongitude());
+        mLastKnownLocation = result;
+        return result;
+    }
+
+    @OnClick(R.id.imb_location)
+    void onMyLocationClicked() {
+        LatLng currentLocation = getLastKnownLocation();
+        if (currentLocation != null) {
+            animateCamera(currentLocation);
+        } else if (Alarmiko.getCurrentLocation() != null){
+            animateCamera(Alarmiko.getCurrentLocation());
+        } else {
+            ErrorUtils.sendBroadcastError(this, ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_LOCATION_UPDATE, null);
+        }
     }
 
     /**
@@ -148,17 +211,15 @@ public class MapsActivity extends BaseActivity implements
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
-
+            LatLng currentLocation = getLastKnownLocation();
+            if (currentLocation != null) {
+                moveCamera(currentLocation, 17f);
+            } else if (Alarmiko.getCurrentLocation() != null){
+                moveCamera(Alarmiko.getCurrentLocation(), 17f);
+            }
             mImvCenterMarker.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
-            mCurrentLocationService.startGettingLocation();
         }
     }
-
-    @Override
-    public boolean onMyLocationButtonClick() {
-        return false;
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -197,9 +258,6 @@ public class MapsActivity extends BaseActivity implements
         return 0;
     }
 
-    /**
-     * Displays a dialog with error message explaining that the location permission is missing.
-     */
     private void showMissingPermissionError() {
         PermissionUtils.PermissionDeniedDialog
                 .newInstance(true).show(getSupportFragmentManager(), "dialog");
@@ -214,11 +272,24 @@ public class MapsActivity extends BaseActivity implements
 
     private void hideViews() {
         mAddressView.hide();
-        mBtnChangeAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).start();
-        mBtnOkAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).start();
+        mBtnChangeAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mBtnChangeAddress.setVisibility(View.INVISIBLE);
+            }
+        }).start();
+        mBtnOkAddress.animate().alpha(0f).setDuration(ANIMATION_DURATION).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mBtnOkAddress.setVisibility(View.INVISIBLE);
+            }
+        }).start();
     }
 
-    public void okClick(View view) {
+    @OnClick(R.id.btn_ok_address)
+    void okClick() {
         Intent intent = new Intent(MapsActivity.this, AlarmEditActivity.class);
 
         String address = mAddressView.getAddressString();
@@ -230,7 +301,6 @@ public class MapsActivity extends BaseActivity implements
                 .address(address)
                 .coordinates(mMap.getCameraPosition().target)
                 .build();
-        Log.d(TAG, "okClick: " + alarm);
 
         intent.setAction(AlarmEditActivity.ACTION_EDIT_ALARM)
                 .putExtra(AlarmEditActivity.EXTRA_PICKED_ADDRESS, alarm);
@@ -245,7 +315,7 @@ public class MapsActivity extends BaseActivity implements
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Place place = PlaceAutocomplete.getPlace(this, data);
-                Log.i(TAG, "Place: " + place.getName());
+                moveCamera(place.getLatLng(), 17f);
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 // TODO: Handle the error.
@@ -254,22 +324,13 @@ public class MapsActivity extends BaseActivity implements
             } else if (resultCode == RESULT_CANCELED) {
                 // The user canceled the operation.
             }
-        } else if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_LOCATION_UPDATE){
-            if (resultCode == RESULT_OK) {
-                mCurrentLocationService.startLocationRequest();
-            }
-        } else if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_CONNECT_GOOGLE_SERVICES
-                || requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GOOGLE_SERVICES){
-            if (resultCode == RESULT_OK) {
-                showMenuButton();
-            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
-    public void changeAddressClick(View view) {
-        Toast.makeText(this, "change address", Toast.LENGTH_SHORT).show();
+    @OnClick(R.id.btn_find_address)
+    void changeAddressClick() {
         // Construct an intent for the place picker
         try {
             Intent intent =
@@ -283,8 +344,8 @@ public class MapsActivity extends BaseActivity implements
         }
     }
 
-    public void menuClick(View view) {
-        Toast.makeText(this, "hello", Toast.LENGTH_SHORT).show();
+    @OnClick(R.id.imb_menu)
+    void menuClick() {
         Intent intent = new Intent(this, AlarmEditActivity.class);
         intent.setAction(AlarmEditActivity.ACTION_ALARM_LIST);
         startActivity(intent);
@@ -297,8 +358,33 @@ public class MapsActivity extends BaseActivity implements
 
     @Override
     public void onAddressLoaded(String address) {
-        mBtnChangeAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
-        mBtnOkAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).start();
+
+        mBtnChangeAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                mBtnChangeAddress.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mBtnChangeAddress.setVisibility(View.VISIBLE);
+            }
+        }).start();
+        mBtnOkAddress.animate().alpha(1f).setDuration(ANIMATION_DURATION).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                mBtnOkAddress.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mBtnOkAddress.setVisibility(View.VISIBLE);
+            }
+        }).start();
     }
 
     @Override
@@ -312,40 +398,5 @@ public class MapsActivity extends BaseActivity implements
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
-
-    @Override
-    public void connectionError(int errorCode, ConnectionResult status) {
-        Log.d(TAG, "connectionError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
-        super.connectionError(errorCode, status);
-        hideMenuButton();
-    }
-
-    private void hideMenuButton() {
-        if (mMenuButton != null) {
-            mMenuButton.setVisibility(View.GONE);
-        }
-    }
-
-    private void showMenuButton() {
-        if (mMenuButton != null) {
-            mMenuButton.setVisibility(View.VISIBLE);
-        }
-    }
-
-    @Override
-    public void criticalError(int errorCode, Status status) {
-        Log.d(TAG, "criticalError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
-        super.criticalError(errorCode, status);
-        hideMenuButton();
-    }
-
-    @Override
-    public void handleError(int errorCode, @Nullable Status status) {
-        Log.d(TAG, "handleError() called with: errorCode = [" + errorCode + "], status = [" + status + "]");
-
-        super.handleError(errorCode, status);
-        hideMenuButton();
     }
 }

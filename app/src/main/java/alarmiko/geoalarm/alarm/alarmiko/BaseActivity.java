@@ -2,6 +2,8 @@
 package alarmiko.geoalarm.alarm.alarmiko;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -19,14 +21,16 @@ import android.view.Menu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.maps.model.LatLng;
 
+import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
-import alarmiko.geoalarm.alarm.alarmiko.utils.LocalBroadcastHelper;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public abstract class BaseActivity extends AppCompatActivity implements ErrorReceiver.ErrorHandler {
+public abstract class BaseActivity extends AppCompatActivity implements ErrorReceiver.ErrorHandler,
+        CurrentLocationService.CurrentLocationServiceCallback {
 
     private static final String TAG = "BaseActivity";
 
@@ -37,6 +41,8 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
     private Menu mMenu;
 
     private ErrorReceiver mErrorReceiver;
+
+    private CurrentLocationService mCurrentLocation;
 
     @LayoutRes
     protected abstract int layoutResId();
@@ -54,33 +60,43 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
         // default value shared preferences file is false).
 
 //        {
-            PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-            // ========================================================================================
-            // TOneverDO: Set theme after setContentView()
-            // ========================================================================================
-            setContentView(layoutResId());
-            // Direct volume changes to the alarm stream
-            setVolumeControlStream(AudioManager.STREAM_ALARM);
-            ButterKnife.bind(this);
-            if (mToolbar != null) {
-                setSupportActionBar(mToolbar);
-                ActionBar ab = getSupportActionBar();
-                if (ab != null) {
-                    ab.setDisplayHomeAsUpEnabled(isDisplayHomeUpEnabled());
-                    ab.setDisplayShowTitleEnabled(isDisplayShowTitleEnabled());
-                }
+        // ========================================================================================
+        // TOneverDO: Set theme after setContentView()
+        // ========================================================================================
+        setContentView(layoutResId());
+        // Direct volume changes to the alarm stream
+        setVolumeControlStream(AudioManager.STREAM_ALARM);
+        ButterKnife.bind(this);
+        if (mToolbar != null) {
+            setSupportActionBar(mToolbar);
+            ActionBar ab = getSupportActionBar();
+            if (ab != null) {
+                ab.setDisplayHomeAsUpEnabled(isDisplayHomeUpEnabled());
+                ab.setDisplayShowTitleEnabled(isDisplayShowTitleEnabled());
             }
+        }
 //        }
 
         mErrorReceiver = new ErrorReceiver(this);
+        mCurrentLocation = new CurrentLocationService(this, this);
+    }
+
+    @Override
+    public void currentLocation(@Nullable LatLng location, boolean isConnected) {
+        if (mCurrentLocation != null) {
+            mCurrentLocation.stopGettingLocation();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        IntentFilter filter = new IntentFilter(ErrorReceiver.ACTION_ERROR_RECEIVED);
+        registerReceiver(mErrorReceiver, filter);
 
-        LocalBroadcastHelper.registerReceiver(this, mErrorReceiver, ErrorReceiver.ACTION_ERROR_RECEIVED);
+        mCurrentLocation.startGettingLocation();
     }
 
     @Override
@@ -94,7 +110,25 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
     protected void onStop() {
         super.onStop();
 
-        LocalBroadcastHelper.unregisterReceiver(this, mErrorReceiver);
+        mCurrentLocation.stopGettingLocation();
+        unregisterReceiver(mErrorReceiver);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_LOCATION_UPDATE){
+            if (resultCode == RESULT_OK) {
+                mCurrentLocation.startGettingLocation();
+            } else {
+                ErrorUtils.sendBroadcastError(this, ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_LOCATION_UPDATE, null);
+            }
+        } else if (requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_CONNECT_GOOGLE_SERVICES
+                || requestCode == ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GOOGLE_SERVICES){
+            if (resultCode == RESULT_OK) {
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
@@ -175,13 +209,15 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
                 description = ErrorUtils.generateErrorDescription(BaseActivity.this, "Registering GEO Alarm", statusCode);
                 break;
             case ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_LOCATION_UPDATE:
-                description = ErrorUtils.generateErrorDescription(BaseActivity.this, "Registering Location Update", statusCode);
+                description = getString(R.string.location_update_error_message);
                 break;
         }
 
         if (description != null) {
             ErrorUtils.navigateToErrorActivity(BaseActivity.this, description);
         }
+
+        this.finish();
     }
 
     @Override

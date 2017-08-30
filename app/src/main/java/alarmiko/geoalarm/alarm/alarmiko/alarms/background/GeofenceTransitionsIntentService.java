@@ -155,7 +155,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
             return basicFence;
         } else {
             List<AwarenessFence> fences = new ArrayList<>();
-            fences.add(basicFence);
+//            fences.add(basicFence);
 
             for (int i = 0; i < DaysOfWeek.NUM_DAYS; i++) {
                 if (alarm.isRecurring(i)) {
@@ -191,7 +191,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
             }
 
             Log.d(TAG, "getAwarenessFence: return fences " + fences.size());
-            return AwarenessFence.and(fences);
+            return AwarenessFence.and(basicFence, AwarenessFence.or(fences));
         }
     }
 
@@ -200,7 +200,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
         Status result = Awareness.FenceApi.updateFences(
                 mGoogleApiClient,
                 new FenceUpdateRequest.Builder()
-                        .addFence(String.valueOf(alarm.getId()), fence, getFencePendingIntent(alarm))
+                        .addFence(String.valueOf(alarm.getId()), fence, getFencePendingIntent())
                         .build())
                 .await();
 
@@ -240,10 +240,10 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private void sendErrorBroadCast(int errorCode, ConnectionResult status) {
         if (ERROR_CONNECTING_TO_GOOGLE == errorCode) {
             if (status.hasResolution()) {
-                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                ErrorUtils.sendBroadcastErrorConnetion(getApplicationContext(),
                         ErrorUtils.ErrorData.RESOLUTION_ERROR_CODE_GEOFENCE_REGISTER, status);
             } else {
-                ErrorUtils.sendBroadcastError(getApplicationContext(),
+                ErrorUtils.sendBroadcastErrorConnetion(getApplicationContext(),
                         ErrorUtils.ErrorData.CRITICAL_ERROR_CODE_GEOFENCE_REGISTER, status);
             }
         }
@@ -290,9 +290,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
         }
     }
 
-    private PendingIntent getFencePendingIntent(Alarm alarm) {
+    private PendingIntent getFencePendingIntent() {
         Intent intent = new Intent(FenceReceiver.FENCE_ACTION);
-//        intent.putExtra(AlarmActivity.EXTRA_RINGING_OBJECT, alarm);
         return PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 

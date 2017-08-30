@@ -5,10 +5,6 @@ import android.view.View;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.misc.AlarmController;
 
-/**
- * Created by nikitaemelyanov on 08.07.17.
- */
-
 public interface AlarmEditInterface {
     void onListItemClick(Alarm item, int position);
     void onListItemDeleted(Alarm item);
@@ -16,4 +12,5 @@ public interface AlarmEditInterface {
     View getSnackbarAnchor();
     AlarmController getAlarmController();
     void editFinished();
+    void onAddNewAlarmCLicked();
 }

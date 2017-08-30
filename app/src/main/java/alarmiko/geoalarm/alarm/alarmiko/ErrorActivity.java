@@ -8,9 +8,11 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class ErrorActivity extends AppCompatActivity {
 
+    public static final String EXTRA_DESCRIPTION = "alarmiko.geoalarm.alarm.alarmiko.ErrorActivity.extra.EXTRA_DESCRIPTION";
     @BindView(R.id.tv_error) TextView mTvError;
     @BindView(R.id.imageView_error) ImageView mImageViewError;
     @BindView(R.id.button_error) Button mBtnError;
@@ -20,6 +22,17 @@ public class ErrorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_error);
 
+        String description = getIntent().getStringExtra(EXTRA_DESCRIPTION);
+
         ButterKnife.bind(this);
+
+        if (description != null) {
+            mTvError.setText(description);
+        }
+    }
+
+    @OnClick(R.id.button_error)
+    void onExitClicked() {
+        this.finish();
     }
 }

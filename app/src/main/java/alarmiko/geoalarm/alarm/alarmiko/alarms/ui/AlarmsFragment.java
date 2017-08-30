@@ -24,6 +24,7 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.data.AlarmsListCursorLoader;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.list.RecyclerViewFragment;
 import alarmiko.geoalarm.alarm.alarmiko.dialogs.TimePickerDialogController;
 import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditInterface;
+import alarmiko.geoalarm.alarm.alarmiko.utils.ActivityEventAdapter;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 
@@ -37,12 +38,35 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     public static final String EXTRA_SCROLL_TO_ALARM_ID = "alarms.extra.SCROLL_TO_ALARM_ID";
     private static final long TIME_TO_UPDATE = TimeUnit.SECONDS.toMillis(15);
 
-    //    private AsyncAlarmsTableUpdateHandler mAsyncUpdateHandler;
-//    private AlarmController mAlarmController;
-//    private View mSnackbarAnchor;
     private TimePickerDialogController mTimePickerDialogController;
     private AlarmEditInterface mListener;
-    private long mLastTime;
+
+    private final ActivityEventAdapter mEventAdapter = new ActivityEventAdapter() {
+        @Override
+        public void handleError(int errorCode, @Nullable Status status) {
+            AlarmsFragment.this.handleError(errorCode, status);
+        }
+
+        @Override
+        public void criticalError(int errorCode, @Nullable Status status) {
+            AlarmsFragment.this.criticalError(errorCode, status);
+        }
+
+        @Override
+        public void connectionError(int errorCode, @Nullable ConnectionResult status) {
+            AlarmsFragment.this.connectionError(errorCode, status);
+        }
+
+        @Override
+        public void setScrollToStableId(long id) {
+            AlarmsFragment.this.setScrollToStableId(id);
+        }
+
+        @Override
+        public void scrollToPosition(int position) {
+            AlarmsFragment.this.scrollToPosition(position);
+        }
+    };
 
 //    private int mExpandedPosition = RecyclerView.NO_POSITION;
 
@@ -88,7 +112,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         super.onStart();
         Log.d(TAG, "onStart()");
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).addErrorListener(this);
+            ((AlarmEditActivity)getActivity()).addActivityEventListener(mEventAdapter);
         }
     }
 
@@ -97,7 +121,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
         super.onStop();
         Log.d(TAG, "onStop()");
         if (getActivity() instanceof AlarmEditActivity) {
-            ((AlarmEditActivity)getActivity()).removeErrorListener(this);
+            ((AlarmEditActivity)getActivity()).removeActivityEventListener(mEventAdapter);
         }
     }
 
@@ -132,7 +156,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
 
     @Override
     public void onFabClick() {
-        mTimePickerDialogController.show(0, 0, makeTimePickerDialogTag());
+        mListener.onAddNewAlarmCLicked();
     }
 
     @Override
@@ -192,14 +216,7 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected void onScrolledToStableId(long id, int position) {
-//        boolean expanded = getAdapter().expand(position);
-//        if (!expanded) {
-//            // Otherwise, it was due to an item update. The VH is expanded
-//            // at this point, so reset it.
-//            getAdapter().collapse(position);
-//        }
-    }
+    protected void onScrolledToStableId(long id, int position) {}
 
     @Override
     public void onTimeSet(ViewGroup viewGroup, int hourOfDay, int minute) {
@@ -265,7 +282,9 @@ public class AlarmsFragment extends RecyclerViewFragment<Alarm, AlarmViewHolder,
     }
 
     private void refreshAdapter() {
-        getAdapter().notifyDataSetChanged();
+        if (getAdapter() != null) {
+            getAdapter().notifyDataSetChanged();
+        }
     }
 
     @Override

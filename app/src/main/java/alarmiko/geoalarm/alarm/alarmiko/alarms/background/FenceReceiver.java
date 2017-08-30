@@ -35,7 +35,6 @@ public class FenceReceiver extends BroadcastReceiver {
         Log.d(TAG, "onReceive: fence key " + idString);
         if (idString == null || getId(idString) == -404
                 || FenceState.TRUE != fenceState.getCurrentState()) {
-            Log.d(TAG, "onReceive: returning 1");
             return;
         }
 
@@ -47,9 +46,7 @@ public class FenceReceiver extends BroadcastReceiver {
                 AlarmCursor alarmCursor = new AlarmsTableManager(context).queryItem(alarmId);
 
                 Alarm alarm = alarmCursor.getItem();
-                Log.d(TAG, "run: " + alarm);
                 if (alarm == null || !alarm.isEnabled() || alarm.isSnoozed()) {
-                    Log.d(TAG, "run: returning 2");
                     return;
                 }
 
@@ -58,7 +55,6 @@ public class FenceReceiver extends BroadcastReceiver {
                 long ringAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Log.d(TAG, "run: Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP");
                     PendingIntent showIntent = ContentIntentUtils.create(context, alarm.getId());
                     AlarmManager.AlarmClockInfo info = new AlarmManager.AlarmClockInfo(ringAt, showIntent);
                     am.setAlarmClock(info, alarmIntent);
@@ -66,7 +62,6 @@ public class FenceReceiver extends BroadcastReceiver {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         am.setExact(AlarmManager.RTC_WAKEUP, ringAt, alarmIntent);
                     }
-                    Log.d(TAG, "run: else");
                     // Show alarm in the status bar
                     Intent alarmChanged = new Intent("android.intent.action.ALARM_CHANGED");
                     alarmChanged.putExtra("alarmSet", true);
@@ -82,12 +77,11 @@ public class FenceReceiver extends BroadcastReceiver {
             return Long.parseLong(s);
         } catch (Exception e) {
             e.printStackTrace();
-            return -404;
+            return -404L;
         }
     }
 
     private PendingIntent alarmIntent(Context context, Alarm alarm) {
-        Log.d(TAG, "alarmIntent() called with: context = [" + context + "], alarm = [" + alarm + "]");
         Intent intent = new Intent(context, AlarmActivity.class)
                 .putExtra(AlarmActivity.EXTRA_RINGING_OBJECT, ParcelableUtil.marshall(alarm));
         return getActivity(context, alarm.getIntId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);

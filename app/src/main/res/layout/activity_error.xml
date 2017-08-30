@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/text_margin"
     tools:context="alarmiko.geoalarm.alarm.alarmiko.ErrorActivity"
     android:weightSum="3"
     android:orientation="vertical">
@@ -13,7 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:textColor="@android:color/holo_red_light"
+        style="@style/TextAppearance.AppCompat.Large"/>
 
     <ImageView
         android:id="@+id/imageView_error"

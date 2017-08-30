@@ -39,14 +39,16 @@ public class ErrorReceiver extends BroadcastReceiver {
                 throw new IllegalStateException("Error code cannot be 0");
             }
 
-            final byte[] bytes = intent.getByteArrayExtra(ErrorUtils.ErrorData.EXTRA_ERROR_STATUS);
+//            final byte[] bytes = intent.getByteArrayExtra(ErrorUtils.ErrorData.EXTRA_ERROR_STATUS);
             Status status = null;
-            if (bytes != null) {
+            if (intent.hasExtra(ErrorUtils.ErrorData.EXTRA_ERROR_STATUS)) {
                 if ((code & ErrorUtils.ErrorData.GOOGLE_CONNECTION_ERROR) > 0) {
-                    ConnectionResult result = ParcelableUtil.unmarshall(bytes, ConnectionResult.CREATOR);
+
+                    ConnectionResult result = intent.getParcelableExtra(ErrorUtils.ErrorData.EXTRA_ERROR_STATUS);
                     mHandler.get().connectionError(code, result);
+                    return;
                 } else {
-                    status = ParcelableUtil.unmarshall(bytes, Status.CREATOR);
+                    status = intent.getParcelableExtra(ErrorUtils.ErrorData.EXTRA_ERROR_STATUS);
                 }
             }
 

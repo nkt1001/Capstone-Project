@@ -13,7 +13,6 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import alarmiko.geoalarm.alarm.alarmiko.Alarmiko;
 import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.Alarm;
 import alarmiko.geoalarm.alarm.alarmiko.alarms.background.GeofenceTransitionsIntentService;
@@ -25,9 +24,7 @@ import alarmiko.geoalarm.alarm.alarmiko.alarms.ringtone.playback.AlarmRingtoneSe
 import alarmiko.geoalarm.alarm.alarmiko.utils.ContentIntentUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DelayedSnackbarHandler;
 import alarmiko.geoalarm.alarm.alarmiko.utils.DurationUtils;
-import alarmiko.geoalarm.alarm.alarmiko.utils.MapUtils;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ParcelableUtil;
-import alarmiko.geoalarm.alarm.alarmiko.utils.Utils;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.TimeFormatUtils.formatTime;
 import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
@@ -190,8 +187,7 @@ public final class AlarmController {
         removeUpcomingAlarmNotification(alarm);
 
         if (showSnackbar) {
-            double distance = MapUtils.toRadiusMeters(Alarmiko.getCurrentLocation(), alarm.coordinates());
-            String message = mAppContext.getString(R.string.geo_alarm_set_for, Math.round(distance), "meters");
+            String message = mAppContext.getString(R.string.geo_alarm_set_for);
             showSnackbar(message);
         }
 
@@ -215,13 +211,10 @@ public final class AlarmController {
             alarm.stopSnoozing();
         }
 
-        final int upcomingDistance = AlarmPreferences.dismissNowDistance(mAppContext);
-        boolean upcoming = Utils.isUpcoming(Alarmiko.getCurrentLocation(), alarm.coordinates(), alarm.radius(), upcomingDistance);
-        if (upcoming && showSnackbar) {
-            double distance = MapUtils.toRadiusMeters(Alarmiko.getCurrentLocation(), alarm.coordinates());
-            distance = Math.round(distance * 100) / 100;
-            String msg = mAppContext.getString(R.string.upcoming_geo_alarm_dismissed,
-                    distance);
+//        final int upcomingDistance = AlarmPreferences.dismissNowDistance(mAppContext);
+//        boolean upcoming = Utils.isUpcoming(Alarmiko.getCurrentLocation(), alarm.coordinates(), alarm.radius(), upcomingDistance);
+        if (showSnackbar) {
+            String msg = mAppContext.getString(R.string.upcoming_geo_alarm_dismissed);
             showSnackbar(msg);
         }
 

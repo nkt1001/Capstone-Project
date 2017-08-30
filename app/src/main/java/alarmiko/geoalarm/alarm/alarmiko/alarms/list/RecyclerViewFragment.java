@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,6 +20,7 @@ import alarmiko.geoalarm.alarm.alarmiko.R;
 import alarmiko.geoalarm.alarm.alarmiko.db.BaseItemCursor;
 import alarmiko.geoalarm.alarm.alarmiko.db.ObjectWithId;
 import butterknife.BindView;
+import butterknife.OnClick;
 
 public abstract class RecyclerViewFragment<
         T extends ObjectWithId,
@@ -45,15 +47,11 @@ public abstract class RecyclerViewFragment<
     // Subclasses are not required to use the default content layout, so this may not be present.
     @BindView(R.id.empty_view)
     TextView mEmptyView;
+    @BindView(R.id.fab)
+    FloatingActionButton fab;
 
     public abstract void onFabClick();
 
-    /**
-     * Callback invoked when we have scrolled to the stable id as set in
-     * {@link #setScrollToStableId(long)}.
-     * @param id the stable id we have scrolled to
-     * @param position the position of the item with this stable id
-     */
     protected abstract void onScrolledToStableId(long id, int position);
 
     /**
@@ -61,9 +59,6 @@ public abstract class RecyclerViewFragment<
      */
     protected abstract A onCreateAdapter();
 
-    /**
-     * @return a resource to a String that will be displayed when the list is empty
-     */
     @StringRes
     protected int emptyMessage() {
         // The reason this isn't abstract is so we don't require subclasses that
@@ -71,9 +66,6 @@ public abstract class RecyclerViewFragment<
         return 0;
     }
 
-    /**
-     * @return a resource to a Drawable that will be displayed when the list is empty
-     */
     @DrawableRes
     protected int emptyIcon() {
         // The reason this isn't abstract is so we don't require subclasses that
@@ -81,24 +73,14 @@ public abstract class RecyclerViewFragment<
         return 0;
     }
 
-    /**
-     * @return whether the list should show an empty view when its adapter has an item count of zero
-     */
     protected boolean hasEmptyView() {
         return true;
     }
 
-    /**
-     * @return the adapter instance created from {@link #onCreateAdapter()}
-     */
     protected final A getAdapter() {
         return mAdapter;
     }
 
-    /**
-     * @return the LayoutManager to set on the RecyclerView. The default implementation
-     * returns a vertical LinearLayoutManager.
-     */
     protected RecyclerView.LayoutManager getLayoutManager() {
         // Called in onCreateView(), so the host activity is alive already.
         return new LinearLayoutManager(getActivity());
@@ -139,6 +121,11 @@ public abstract class RecyclerViewFragment<
         // was an insertion, scroll to the last modified alarm.
         performScrollToStableId(mScrollToStableId);
         mScrollToStableId = RecyclerView.NO_ID;
+    }
+
+    @OnClick(R.id.fab)
+    void onClickedFab() {
+        onFabClick();
     }
 
     @Override
