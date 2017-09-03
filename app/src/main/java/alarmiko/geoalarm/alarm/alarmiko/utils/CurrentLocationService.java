@@ -73,7 +73,6 @@ public class CurrentLocationService implements GoogleApiClient.ConnectionCallbac
 
     private void requestLocationUpdates() {
 
-
             LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                     .addLocationRequest(mLocationRequest);
             builder.setAlwaysShow(true);

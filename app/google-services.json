@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "468533700422",
+    "firebase_url": "https://alarmiko-demo.firebaseio.com",
+    "project_id": "alarmiko-demo",
+    "storage_bucket": "alarmiko-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:468533700422:android:d2e08f815ea461a9",
+        "android_client_info": {
+          "package_name": "alarmiko.geoalarm.alarm.alarmiko"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "468533700422-811f11j8qetvq42s93n16n1l4qqksj5c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWwtPZQ8eYO-WbNpGk7S5AYyFn6bnPTmI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
