@@ -4,7 +4,7 @@ package alarmiko.geoalarm.alarm.alarmiko.db;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import alarmiko.geoalarm.alarm.alarmiko.alarms.list.ScrollHandler;
+import alarmiko.geoalarm.alarm.alarmiko.list.ScrollHandler;
 
 public abstract class AsyncDatabaseTableUpdateHandler<
         T extends ObjectWithId,

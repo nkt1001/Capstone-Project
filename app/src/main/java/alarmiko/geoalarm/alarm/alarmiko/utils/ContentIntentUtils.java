@@ -6,8 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 
-import alarmiko.geoalarm.alarm.alarmiko.AlarmEditActivity;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.list.RecyclerViewFragment;
+import alarmiko.geoalarm.alarm.alarmiko.list.RecyclerViewFragment;
+import alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditActivity;
 
 import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
 

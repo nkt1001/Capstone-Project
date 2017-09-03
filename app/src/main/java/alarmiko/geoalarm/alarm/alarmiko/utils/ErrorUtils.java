@@ -8,8 +8,8 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Status;
 
-import alarmiko.geoalarm.alarm.alarmiko.ErrorActivity;
 import alarmiko.geoalarm.alarm.alarmiko.R;
+import alarmiko.geoalarm.alarm.alarmiko.ui.ErrorActivity;
 
 import static alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils.ErrorData.EXTRA_ERROR_CODE;
 import static alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils.ErrorData.EXTRA_ERROR_STATUS;

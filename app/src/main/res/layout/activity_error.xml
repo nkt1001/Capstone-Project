@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/text_margin"
-    tools:context="alarmiko.geoalarm.alarm.alarmiko.ErrorActivity"
+    tools:context="alarmiko.geoalarm.alarm.alarmiko.ui.ErrorActivity"
     android:weightSum="3"
     android:orientation="vertical">
 

@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="circle_fill_color">#9681d4fa</color>
+    <color name="circle_fill_color_map_enabled">#9681c784</color>
+    <color name="circle_fill_color_map_disabled">#96e57373</color>
 </resources>

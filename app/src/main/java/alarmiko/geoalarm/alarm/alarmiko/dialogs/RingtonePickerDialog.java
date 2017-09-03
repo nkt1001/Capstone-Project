@@ -9,7 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 
 import alarmiko.geoalarm.alarm.alarmiko.R;
-import alarmiko.geoalarm.alarm.alarmiko.alarms.ringtone.playback.RingtoneLoop;
+import alarmiko.geoalarm.alarm.alarmiko.ringtone.playback.RingtoneLoop;
 
 public class RingtonePickerDialog extends BaseAlertDialogFragment {
     private static final String TAG = "RingtonePickerDialog";

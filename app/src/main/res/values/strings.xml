@@ -234,5 +234,12 @@
     <string name="next">NEXT</string>
     <string name="location_update_error_message">The app requires the GPS Location to be enabled. It is also recommended to use High Accuracy location for best performance.</string>
     <string name="once">Once</string>
+    <string name="appwidget_switch_alarm_on">alarm on</string>
+    <string name="appwidget_switch_alarm_off">alarm off</string>
+    <string name="appwidget_add_alarm">add alarm</string>
+    <string name="add_widget">Add widget</string>
+    <string name="distance_template">in %1$d meters</string>
+    <string name="schedule_now">Schedule Now</string>
+    <string name="no_alarms">No Alarms Added</string>
 
 </resources>

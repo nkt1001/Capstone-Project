@@ -5,7 +5,7 @@ import android.support.annotation.Nullable;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Status;
 
-import alarmiko.geoalarm.alarm.alarmiko.alarms.list.ScrollHandler;
+import alarmiko.geoalarm.alarm.alarmiko.list.ScrollHandler;
 
 public class ActivityEventAdapter implements ScrollHandler, ErrorReceiver.ErrorHandler {
     @Override
