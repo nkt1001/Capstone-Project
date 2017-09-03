@@ -16,14 +16,6 @@ import java.util.Locale;
 
 import alarmiko.geoalarm.alarm.alarmiko.utils.DurationUtils;
 
-/**
- * Created by Phillip Hsu on 4/30/2016.
- * 
- * A modified version of the framework's Chronometer class that counts down toward the base time,
- * uses the {@link System#currentTimeMillis()} timebase, and only has minute precision.
- *
- * TODO: Refactor by using the ChronometerDelegate class.
- */
 public class AlarmCountdown extends TextView {
     private static final String TAG = "AlarmCountdown";
 

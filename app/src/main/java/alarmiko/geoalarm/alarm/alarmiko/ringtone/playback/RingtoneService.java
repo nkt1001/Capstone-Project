@@ -1,22 +1,3 @@
-/*
- * Copyright 2017 Phillip Hsu
- *
- * This file is part of ClockPlus.
- *
- * ClockPlus is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * ClockPlus is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with ClockPlus.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package alarmiko.geoalarm.alarm.alarmiko.ringtone.playback;
 
 import android.app.Notification;
@@ -41,16 +22,6 @@ import alarmiko.geoalarm.alarm.alarmiko.ringtone.RingtoneActivity;
 import alarmiko.geoalarm.alarm.alarmiko.utils.LocalBroadcastHelper;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ParcelableUtil;
 
-/**
- * Runs in the foreground. While it can still be killed by the system, it stays alive significantly
- * longer than if it does not run in the foreground. The longevity should be sufficient for practical
- * use. In fact, if the app is used properly, longevity should be a non-issue; realistically, the lifetime
- * of the RingtoneService will be tied to that of its RingtoneActivity because users are not likely to
- * navigate away from the Activity without making an action. But if they do accidentally navigate away,
- * they have plenty of time to make the desired action via the notification.
- *
- * TOneverDO: Change this to not be a started service!
- */
 public abstract class RingtoneService<T extends Parcelable> extends Service {
     private static final String TAG = "RingtoneService";
 
