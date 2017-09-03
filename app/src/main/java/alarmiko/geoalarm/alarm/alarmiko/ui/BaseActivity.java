@@ -18,6 +18,10 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.Status;
@@ -25,6 +29,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import alarmiko.geoalarm.alarm.alarmiko.R;
+import alarmiko.geoalarm.alarm.alarmiko.ads.AdConfig;
 import alarmiko.geoalarm.alarm.alarmiko.utils.CurrentLocationService;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorReceiver;
 import alarmiko.geoalarm.alarm.alarmiko.utils.ErrorUtils;
@@ -45,6 +50,8 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
     private ErrorReceiver mErrorReceiver;
 
     private CurrentLocationService mCurrentLocation;
+
+    protected InterstitialAd mInterstitial;
 
     @LayoutRes
     protected abstract int layoutResId();
@@ -83,6 +90,11 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
 
         mErrorReceiver = new ErrorReceiver(this);
         mCurrentLocation = new CurrentLocationService(this, this);
+        MobileAds.initialize(this);
+        if (AdConfig.isEnabled) {
+            initInterstitial();
+            requestNewInterstitial();
+        }
 
         Log.d(TAG, "onCreate: " + FirebaseInstanceId.getInstance().getToken());
     }
@@ -138,6 +150,32 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void initInterstitial() {
+        mInterstitial = new InterstitialAd(this);
+        mInterstitial.setAdUnitId(AdConfig.INTERSTITIAL_ID);
+        mInterstitial.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+            }
+        });
+    }
+
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .build();
+        if (mInterstitial != null) {
+            mInterstitial.loadAd(adRequest);
+        }
+    }
+
+    protected void showInterstitial() {
+        if (mInterstitial != null && mInterstitial.isLoaded()) {
+            mInterstitial.show();
         }
     }
 

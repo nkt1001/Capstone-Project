@@ -355,6 +355,7 @@ public class MapsActivity extends BaseActivity implements
                 .build();
 
         openAddress(alarm, AlarmEditActivity.ACTION_ADD_ALARM);
+        showInterstitial();
     }
 
     private void openAddress(Alarm alarm, String action) {
@@ -432,6 +433,7 @@ public class MapsActivity extends BaseActivity implements
         Intent intent = new Intent(this, AlarmEditActivity.class);
         intent.setAction(AlarmEditActivity.ACTION_ALARM_LIST);
         startActivity(intent);
+        showInterstitial();
     }
 
     @Override

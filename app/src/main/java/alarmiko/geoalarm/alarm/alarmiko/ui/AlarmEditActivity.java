@@ -129,6 +129,7 @@ public class AlarmEditActivity extends BaseActivity implements
         transaction.replace(R.id.fragment_container, EditAlarmFragment.newInstance(item, true));
         transaction.addToBackStack(null);
         transaction.commit();
+        showInterstitial();
     }
 
     private void showAlarmListFragment() {
@@ -139,6 +140,7 @@ public class AlarmEditActivity extends BaseActivity implements
             transaction.replace(R.id.fragment_container, new AlarmsFragment());
             transaction.commit();
         }
+        showInterstitial();
     }
 
     @Override
