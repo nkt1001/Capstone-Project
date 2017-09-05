@@ -43,11 +43,10 @@ public class AddLabelDialog extends BaseAlertDialogFragment {
                 EditorInfo.TYPE_CLASS_TEXT // Needed or else we won't get automatic spacing between words
                 | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
-//        int spacingLeft = getResources().getDimensionPixelSize(R.dimen.item_padding_start);
-//        int spacingRight = getResources().getDimensionPixelSize(R.dimen.item_padding_end);
+        int spacingLeft = getResources().getDimensionPixelSize(R.dimen.item_padding_start);
+        int spacingRight = getResources().getDimensionPixelSize(R.dimen.item_padding_end);
 
-        builder.setTitle(R.string.label)
-                .setView(mEditText);
+        builder.setTitle(R.string.label).setView(mEditText, spacingLeft, 0, spacingRight, 0);
 
         AlertDialog dialog = super.createFrom(builder);
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
