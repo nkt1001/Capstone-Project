@@ -41,15 +41,15 @@
             android:value="@string/google_maps_key" />
 
         <receiver
-            android:name="alarmiko.geoalarm.alarm.alarmiko.background.UpcomingAlarmReceiver"
+            android:name=".background.UpcomingAlarmReceiver"
             android:enabled="true"
             android:exported="false" />
         <receiver
-            android:name="alarmiko.geoalarm.alarm.alarmiko.background.PendingAlarmScheduler"
+            android:name=".background.PendingAlarmScheduler"
             android:enabled="true"
             android:exported="false" />
         <receiver
-            android:name="alarmiko.geoalarm.alarm.alarmiko.background.OnBootUpReceiver"
+            android:name=".background.OnBootUpReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
@@ -62,7 +62,7 @@
         </receiver>
 
         <service
-            android:name="alarmiko.geoalarm.alarm.alarmiko.background.OnBootUpAlarmScheduler"
+            android:name=".background.OnBootUpAlarmScheduler"
             android:enabled="true"
             android:exported="false" />
         <service
@@ -71,7 +71,7 @@
             android:exported="false" />
 
         <activity
-            android:name="alarmiko.geoalarm.alarm.alarmiko.ui.MapsActivity"
+            android:name=".ui.MapsActivity"
             android:label="@string/title_activity_maps"
             android:theme="@style/MapActivityTheme">
             <intent-filter>
@@ -81,7 +81,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="alarmiko.geoalarm.alarm.alarmiko.ui.AlarmEditActivity"
+            android:name=".ui.AlarmEditActivity"
             android:label="@string/title_activity_alarm"
             android:parentActivityName=".ui.MapsActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -90,21 +90,21 @@
                 android:value="alarmiko.geoalarm.alarm.alarmiko.ui.MapsActivity" />
         </activity>
         <activity
-            android:name="alarmiko.geoalarm.alarm.alarmiko.ringtone.AlarmActivity"
+            android:name=".ringtone.AlarmActivity"
             android:excludeFromRecents="true"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="nosensor"
-            android:taskAffinity="alarmiko.geoalarm.alarm.alarmiko.ringtone.RingtoneActivity"/>
+            android:taskAffinity="alarmiko.geoalarm.alarm.alarmiko.ringtone.RingtoneActivity" />
 
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="d05b7913042ca7ed61946e8a1ec27c3bb0a00dbd" />
 
-        <service android:name="alarmiko.geoalarm.alarm.alarmiko.background.GeofenceTransitionsIntentService" />
+        <service android:name=".background.GeofenceTransitionsIntentService" />
 
         <receiver
-            android:name="alarmiko.geoalarm.alarm.alarmiko.background.FenceReceiver"
+            android:name=".background.FenceReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -112,20 +112,20 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name="alarmiko.geoalarm.alarm.alarmiko.ui.ErrorActivity" />
+        <activity android:name=".ui.ErrorActivity" />
 
-        <service android:name="alarmiko.geoalarm.alarm.alarmiko.firebase.AlarmikoFirebaseMessagingService">
+        <service android:name=".firebase.AlarmikoFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name="alarmiko.geoalarm.alarm.alarmiko.firebase.AlarmikoFirebaseInstanceIDService">
+        <service android:name=".firebase.AlarmikoFirebaseInstanceIDService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
 
-        <receiver android:name="alarmiko.geoalarm.alarm.alarmiko.widget.AlarmikoWidget">
+        <receiver android:name=".widget.AlarmikoWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -134,6 +134,12 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/alarmiko_widget_info" />
         </receiver>
+
+        <provider
+            android:name=".db.AlarmikoContentProvider"
+            android:authorities="alarmiko.geoalarm.alarm.alarmiko"
+            android:enabled="true"
+            android:exported="true"/>
     </application>
 
 </manifest>

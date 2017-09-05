@@ -1,14 +1,13 @@
 
 package alarmiko.geoalarm.alarm.alarmiko.ui;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.TextView;
 
 import java.util.Formatter;
 import java.util.IllegalFormatException;
@@ -16,7 +15,7 @@ import java.util.Locale;
 
 import alarmiko.geoalarm.alarm.alarmiko.utils.DurationUtils;
 
-public class AlarmCountdown extends TextView {
+public class AlarmCountdown extends AppCompatTextView {
     private static final String TAG = "AlarmCountdown";
 
     /**
@@ -72,18 +71,6 @@ public class AlarmCountdown extends TextView {
 
 //        final TypedArray a = context.obtainStyledAttributes(
 //                attrs, com.android.internal.R.styleable.Chronometer, defStyleAttr, 0);
-//        setFormat(a.getString(com.android.internal.R.styleable.Chronometer_format));
-//        a.recycle();
-
-        init();
-    }
-
-    @TargetApi(21)
-    public AlarmCountdown(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-
-//        final TypedArray a = context.obtainStyledAttributes(
-//                attrs, com.android.internal.R.styleable.Chronometer, defStyleAttr, defStyleRes);
 //        setFormat(a.getString(com.android.internal.R.styleable.Chronometer_format));
 //        a.recycle();
 
@@ -269,63 +256,4 @@ public class AlarmCountdown extends TextView {
             mOnChronometerTickListener.onChronometerTick(this);
         }
     }
-
-    private static final int MIN_IN_SEC = 60;
-    private static final int HOUR_IN_SEC = MIN_IN_SEC*60;
-//    private static String formatDuration(long ms) {
-//        final Resources res = Resources.getSystem();
-//        final StringBuilder text = new StringBuilder();
-//
-//        int duration = (int) (ms / DateUtils.SECOND_IN_MILLIS);
-//        if (duration < 0) {
-//            duration = -duration;
-//        }
-//
-//        int h = 0;
-//        int m = 0;
-//
-//        if (duration >= HOUR_IN_SEC) {
-//            h = duration / HOUR_IN_SEC;
-//            duration -= h * HOUR_IN_SEC;
-//        }
-//        if (duration >= MIN_IN_SEC) {
-//            m = duration / MIN_IN_SEC;
-//            duration -= m * MIN_IN_SEC;
-//        }
-//        int s = duration;
-//
-//        try {
-//            if (h > 0) {
-//                text.append(res.getQuantityString(
-//                        com.android.internal.R.plurals.duration_hours, h, h));
-//            }
-//            if (m > 0) {
-//                if (text.length() > 0) {
-//                    text.append(' ');
-//                }
-//                text.append(res.getQuantityString(
-//                        com.android.internal.R.plurals.duration_minutes, m, m));
-//            }
-//
-//            if (text.length() > 0) {
-//                text.append(' ');
-//            }
-//            text.append(res.getQuantityString(
-//                    com.android.internal.R.plurals.duration_seconds, s, s));
-//        } catch (Resources.NotFoundException e) {
-//            // Ignore; plurals throws an exception for an untranslated quantity for a given locale.
-//            return null;
-//        }
-//        return text.toString();
-//    }
-//
-//    @Override
-//    public CharSequence getContentDescription() {
-//        return formatDuration(mNow - mBase);
-//    }
-//
-//    @Override
-//    public CharSequence getAccessibilityClassName() {
-//        return AlarmCountdown.class.getName();
-//    }
 }

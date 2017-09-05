@@ -26,6 +26,7 @@
         android:id="@+id/appwidget_divider_left"
         style="@style/Divider.Vertical"
         android:background="@android:color/white"
+        android:contentDescription="@string/divider_line"
         android:visibility="gone"/>
 
     <LinearLayout
@@ -62,6 +63,7 @@
         android:id="@+id/appwidget_divider_right"
         style="@style/Divider.Vertical"
         android:background="@android:color/white"
+        android:contentDescription="@string/divider_line"
         android:visibility="gone"/>
 
     <TextView

@@ -90,8 +90,10 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
 
         mErrorReceiver = new ErrorReceiver(this);
         mCurrentLocation = new CurrentLocationService(this, this);
-        MobileAds.initialize(this);
+
         if (AdConfig.isEnabled) {
+            MobileAds.initialize(this, AdConfig.APP_ID);
+
             initInterstitial();
             requestNewInterstitial();
         }
@@ -154,7 +156,7 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
     }
 
     private void initInterstitial() {
-        mInterstitial = new InterstitialAd(this);
+        mInterstitial = new InterstitialAd(getApplicationContext());
         mInterstitial.setAdUnitId(AdConfig.INTERSTITIAL_ID);
         mInterstitial.setAdListener(new AdListener() {
             @Override
@@ -165,10 +167,10 @@ public abstract class BaseActivity extends AppCompatActivity implements ErrorRec
     }
 
     private void requestNewInterstitial() {
-        AdRequest adRequest = new AdRequest.Builder()
+        if (mInterstitial != null) {
+            AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .build();
-        if (mInterstitial != null) {
             mInterstitial.loadAd(adRequest);
         }
     }

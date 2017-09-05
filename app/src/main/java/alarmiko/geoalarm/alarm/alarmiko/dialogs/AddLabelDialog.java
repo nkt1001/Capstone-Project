@@ -9,14 +9,13 @@ import android.support.v7.widget.AppCompatEditText;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import alarmiko.geoalarm.alarm.alarmiko.R;
 
 
 public class AddLabelDialog extends BaseAlertDialogFragment {
 
-    private EditText mEditText;
+    private AppCompatEditText mEditText;
     private OnLabelSetListener mOnLabelSetListener;
     private CharSequence mInitialText;
 
@@ -44,12 +43,11 @@ public class AddLabelDialog extends BaseAlertDialogFragment {
                 EditorInfo.TYPE_CLASS_TEXT // Needed or else we won't get automatic spacing between words
                 | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
-        // TODO: We can use the same value for both directions.
-        int spacingLeft = getResources().getDimensionPixelSize(R.dimen.item_padding_start);
-        int spacingRight = getResources().getDimensionPixelSize(R.dimen.item_padding_end);
+//        int spacingLeft = getResources().getDimensionPixelSize(R.dimen.item_padding_start);
+//        int spacingRight = getResources().getDimensionPixelSize(R.dimen.item_padding_end);
 
         builder.setTitle(R.string.label)
-                .setView(mEditText, spacingLeft, 0, spacingRight, 0);
+                .setView(mEditText);
 
         AlertDialog dialog = super.createFrom(builder);
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {

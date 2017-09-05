@@ -153,6 +153,7 @@ public class MapsActivity extends BaseActivity implements
     public void currentLocation(@Nullable LatLng location, boolean isConnected) {
         if (mLastKnownLocation == null && mMap != null) {
             moveCamera(location, 17f);
+            mLastKnownLocation = location;
         } else if (mMap == null) {
             mLastKnownLocation = location;
         }
@@ -309,8 +310,6 @@ public class MapsActivity extends BaseActivity implements
         if (mMap == null || alarms == null) {
             return;
         }
-
-//        Log.d(TAG, "fillMapWithMarkers() called with: alarms = [" + alarms.size() + "]");
 
         mMap.clear();
 
@@ -482,10 +481,17 @@ public class MapsActivity extends BaseActivity implements
         int count = data == null ? 0 : data.getCount();
 
         if (count == 0) {
+            if (mMap != null) {
+                mMap.clear();
+            }
+            if (mAlarms != null) {
+                mAlarms.clear();
+            }
             return;
         }
 
-        if (mAlarms != null && mAlarms.size() > 0) {
+        if (mAlarms != null) {
+
             mAlarms.clear();
         }
 

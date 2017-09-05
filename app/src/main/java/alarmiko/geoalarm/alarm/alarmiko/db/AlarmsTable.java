@@ -2,10 +2,14 @@
 package alarmiko.geoalarm.alarm.alarmiko.db;
 
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 
 public final class AlarmsTable {
 
     private AlarmsTable() {}
+
+    public static final String CONTENT_AUTHORITY = "alarmiko.geoalarm.alarm.alarmiko";
+    public static final Uri BASE_URI = Uri.parse("content://alarmiko.geoalarm.alarm.alarmiko");
 
     // TODO: Consider defining index constants for each column,
     // and then removing all cursor getColumnIndex() calls.
@@ -93,5 +97,24 @@ public final class AlarmsTable {
     public static void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALARMS);
         onCreate(db);
+    }
+
+    public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.alarmiko.geoalarm.alarm.alarmiko.items";
+    public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.alarmiko.geoalarm.alarm.alarmiko.items";
+
+
+    /** Matches: /items/ */
+    public static Uri buildDirUri() {
+        return BASE_URI.buildUpon().appendPath("items").build();
+    }
+
+    /** Matches: /items/[_id]/ */
+    public static Uri buildItemUri(long _id) {
+        return BASE_URI.buildUpon().appendPath("items").appendPath(Long.toString(_id)).build();
+    }
+
+    /** Read item ID item detail URI. */
+    public static long getItemId(Uri itemUri) {
+        return Long.parseLong(itemUri.getPathSegments().get(1));
     }
 }

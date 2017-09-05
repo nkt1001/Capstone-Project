@@ -241,5 +241,9 @@
     <string name="distance_template">in %1$d meters</string>
     <string name="schedule_now">Schedule Now</string>
     <string name="no_alarms">No Alarms Added</string>
+    <string name="launcher_icon">Launcher icon</string>
+    <string name="menu_button">Menu Button</string>
+    <string name="location_button">My location button</string>
+    <string name="divider_line">divider line</string>
 
 </resources>
